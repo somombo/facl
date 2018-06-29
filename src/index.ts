@@ -40,14 +40,20 @@ const EXAMPLE_AC_RULES = (`
 const express = require('express')
 const app = express()
 
+// takes in string source code representing the rules
+// returns AST or similar data structure respresenting the syntactic analysis
 function fake_ac_rules_parse(rules){
   return rules.length
 }
 
-function fake_ac_middleware(rules){
+// **currently only a mock function
+// will depend on a parse function e.g. `ac_rules_parse` 
+// that hopefully provided by third party or firebase team
+function ac_middleware(rules){
   return (req, res, next) => {
     function isAllowed (req) {
 
+      // this fake mock makes it so that it currently 'randomly' allows or denys 
       const fake_decision = !!((Date.now() + JSON.stringify(req.headers).length + fake_ac_rules_parse(rules))  % 2)
       return fake_decision
 
@@ -63,7 +69,7 @@ function fake_ac_middleware(rules){
   
 }
  
-app.use(fake_ac_middleware(EXAMPLE_AC_RULES))
+app.use(ac_middleware(EXAMPLE_AC_RULES))
 
 app.all('*', (req, res) => res.send(`<h1>Congratulations!</h1> <h4>You are authorized to see this.</h4> <pre>${Date.now()}</pre>`))
 
