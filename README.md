@@ -50,5 +50,18 @@ service cloud.functions.https {
 }
 ```
 
+## Installation / Running
+
+To install:
+```
+npm install
+```
+
+To run:
+```
+npm start
+```
 
 See also [XACML](https://en.wikipedia.org/wiki/XACML).
+
+
