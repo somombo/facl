@@ -1,0 +1,29 @@
+{
+  "name": "facl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/somombo/facl.git"
+  },
+  "keywords": [],
+  "author": "Somo S. <somo@mombo.solutions>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/somombo/facl/issues"
+  },
+  "homepage": "https://github.com/somombo/facl#readme",
+  "dependencies": {
+    "express": "^4.16.3"
+  },
+  "devDependencies": {
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "http-proxy-middleware": "^0.18.0",
+    "request": "^2.87.0"
+  }
+}
