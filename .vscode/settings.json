@@ -7,4 +7,20 @@
     "mocha.requires": [
         "ts-node/register"
     ],
+    "mocha.coverage": {
+        "enable": false,
+        "decoration": false,
+        "runWithInterval": false,
+        "autoUpdateInterval": 20000,
+        "activeOnStart": false,
+        "runAfterTest": false,
+        "runCoverageAfterFileSave": false,
+        "reporters": []
+    },
+    // "mocha.sideBarOptions": {
+    //     "lens": false,
+    //     "decoration": false,
+    //     "autoUpdateTime": 2000,
+    //     "showDebugTestStatus": true
+    // },    
 }

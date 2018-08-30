@@ -1,9 +1,16 @@
+function isFunction(f){
+  // TODO: Find more precise way to test for Function if there's any
+    
+  return typeof f === 'function'
+       
+
+}
+
 export default class Operators {
   static not(p) {
     return !p
   }
   static negative(p) {
-    console.log("negative here:", p)
     return -p
   }
 
@@ -61,16 +68,31 @@ export default class Operators {
   ////
 
   static select(p,s) {
-    return p[s]
+    return p[s] || (ctx => p(ctx)[s])
   }
   static index(p,s) {
-    return p[s]
+    return p[s] || (ctx => p(ctx)[s])
   }
   static construct(p,s) {
-    return new p(s)
+
+    
+
+    return ctx => { 
+      const P = p(ctx)
+      return new P(s)
+    }
+
+    // try {
+    //   return  new p(s)
+      
+    // } catch (error) {
+      
+    // }
+    
   }
   static invoke(p,s) {
-    return p(s)
+
+    return p(...s) || (ctx => p(ctx)(...s))
   }
 
 }

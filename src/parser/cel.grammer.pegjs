@@ -98,7 +98,7 @@ Atomic
   = "[" __ exprList:ExprList __ "]" { return exprList }
   / "{" __ mapInits:MapInits __ "}" { return mapInits }
   / "(" __ expr:Expression __ ")" { return expr }
-  / "." __ primary:IDENTIFIER { return {class: "OPERATOR", type: "global_qualify", primary}}
+  / "." __ primary:IDENTIFIER { return {class: "OPERATOR", type: "fully_qualify", category:"unary", primary}}
   / IDENTIFIER
 
 

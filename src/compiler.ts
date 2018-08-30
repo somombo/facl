@@ -29,12 +29,18 @@ function parse(rules_source: string): AST {
 
 }
 
+
 // internal function: exported only for unit test purposes
-export function _compile_(ast: AST, ctx?:any): any {
+export function _compile_(ast: AST): any {
   if(  (ast.class as TokenClass) === TokenClass.OPERATOR ){
     // console.log("category", ast.category, ast)
     // console.log("neg momo momo op:", ast)
     if(ast.category === "unary"){ 
+
+      if( ast.type==="fully_qualify" ) {
+        return _compile_(ast.primary)
+      }
+
       return op[ ast.type ]( 
         _compile_(ast.primary) 
       )
@@ -45,10 +51,21 @@ export function _compile_(ast: AST, ctx?:any): any {
         _compile_(ast.tertiary)
       )      
     } else if(ast.category === "binary"){ 
+
+
+      if( ast.type==="select" ) {
+       
+        return op[ ast.type ](
+          _compile_(ast.primary), 
+          ast.secondary.id
+        )
+      }
+
       return op[ ast.type ](
         _compile_(ast.primary), 
         _compile_(ast.secondary)
       )
+      
     }
 
     throw "Opertator category unknown."
@@ -66,13 +83,20 @@ export function _compile_(ast: AST, ctx?:any): any {
     
     switch (ast.type) {
       case "dictionary":
-        return ast.list.reduce( (t,h) => ({ ...t, [h[0]]: h[1] }), {} )
+
+        return ast.list
+        .map( ([k,v]) => [k.id, _compile_(v)] )
+        .reduce( (t,h) => ({ ...t, [h[0]]: h[1] }), {} )
+
 
       case "map":
-        return new Map(ast.list) 
+        return new Map( 
+          ast.list
+          .map( ([k,v]) => [_compile_(k), _compile_(v)] )
+        ) 
 
       case "list":
-        return ast.list     
+        return ast.list.map(_compile_)     
     }
 
     throw "AST `ITERABLE` must be of `type` identical to  `dictionary`,`map` or `list`"
@@ -82,8 +106,14 @@ export function _compile_(ast: AST, ctx?:any): any {
   else 
   
   if(  (ast.class as TokenClass) === TokenClass.IDENTIFIER ) {
-    if (!ctx) throw "Context for IDENTIFIER is not available"
-    return ctx[ast.id]
+    // if (!ctx) {
+    //   console.error("Missing Context for Ident. AST:", ast)
+    //   throw "Context for IDENTIFIER is not available"
+    // }
+    
+    
+
+    return ( ctx ) => ctx[ast.id]
   }
   
   else 
@@ -109,7 +139,7 @@ export function _compile_(ast: AST, ctx?:any): any {
 
     if (ast.type === 'allow'){
       // console.log("ast.actions", ast)
-      return new Allow(ast.actions, (r, c) => _compile_(ast.condition, c)) as Allow;
+      return new Allow(ast.actions, _compile_(ast.condition)) as Allow;
     }
 
     throw "`Child` tokens must be of `type=match` or `type=allow`"

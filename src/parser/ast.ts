@@ -3,7 +3,7 @@ import { Request } from 'express'
 import * as pathToRegex from 'path-to-regexp'
 import { validVariableName, toUniformCase, WRITE_METHODS, READ_METHODS } from '../utils';
 
-export type Condition = (request: Request, ctx?: any) => boolean
+export type Condition = (ctx: any) => boolean
 export type Action = string
 export type Children = (Match | Allow)[]
 
@@ -147,7 +147,7 @@ export class Allow {
   }
 
   isAllowedReq(req: Request): boolean {
-    return this.condition(req)
+    return this.condition({req})
   }
 }
 
