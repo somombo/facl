@@ -14,7 +14,7 @@ Here is an example of what we are aiming to be able to write with this language.
 
 ```
 // The `cloud.functions.https` namespace currently doesn't exist but would 
-// allow things like `request.is("json")` and `request.body`
+// allow things like `request.accepts("json")` and `request.body`
 // that are expected in an http validation context (see below for example use)
 service cloud.functions.https {
   match /app {
@@ -36,7 +36,7 @@ service cloud.functions.https {
       // Allow GET requests to e.g. "/other_api/my_youtube",
       // only if requester's `Content-Type` is "application/json".    
       // The `allow get` is the same as `allow read`.
-      allow get: if request.is("json");  
+      allow get: if request.accepts("json");  
           
       // Allow POST, PUT and DELETE requests to e.g. "/other_api/my_google_plus",
       // only if requester's has non-empty body.

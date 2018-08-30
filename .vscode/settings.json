@@ -1,0 +1,10 @@
+{
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "mocha.files.glob": "src/**/*.spec.ts",
+    // "mocha.files.glob": "+(src/compiler.spec.ts | src/index.spec.ts)",
+    // "mocha.files.glob": "test/index.ts",
+    // "mocha.files.glob": "*(src/**/*.spec.ts | test/**/*.ts)",
+    "mocha.requires": [
+        "ts-node/register"
+    ],
+}

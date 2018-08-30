@@ -1,0 +1,23 @@
+{
+  "restartable": "'",
+
+  "ignore": [ 
+    "src/**/*.spec.ts",
+    ".git",
+    "node_modules/**" ,
+    "test/example_output_ast.json"   
+  ],
+  "execMap": {
+    "js": "node --harmony",
+    "ts": "ts-node"
+  },  
+  "delay": "2500",
+  "watch": [
+    "src/**",
+    "test/**"      
+  ],    
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "ts,js,json,pegjs" 
+}

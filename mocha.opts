@@ -1,0 +1,3 @@
+-r ts-node/register
+--recursive
+--watch-extensions ts,js,pegjs,rules

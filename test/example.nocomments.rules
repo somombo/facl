@@ -1,0 +1,21 @@
+service https.cloudfunctions.net {
+  match /app {
+
+    match /my_apis/{api}/endpoints {
+      match /{endpoint=**} {
+        allow read, write: if request.auth.uid != null;
+      }
+    }
+
+    allow read: if true; 
+
+    match /other_api/{other_endpoint} {
+    
+      allow get: if request.accepts("json");  
+        
+      allow post, put, delete: if request.body != null;  
+    
+    }     
+  }
+
+}

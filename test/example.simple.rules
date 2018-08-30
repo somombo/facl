@@ -1,0 +1,5 @@
+service https.cloudfunctions.net {
+  match /app {
+    allow read: if ( true ? 1 : 0 ) ; 
+  }
+}
