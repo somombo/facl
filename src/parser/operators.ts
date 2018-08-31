@@ -68,31 +68,46 @@ export default class Operators {
   ////
 
   static select(p,s) {
-    return p[s] || (ctx => p(ctx)[s])
+    
+     if(p[s]) return p[s] 
+      
+     return function(ctx){
+
+      const P = p(ctx)
+    
+      return P[s] 
+    
+    }
+  
+
+
+
+    
   }
   static index(p,s) {
+    
     return p[s] || (ctx => p(ctx)[s])
   }
   static construct(p,s) {
-
-    
-
-    return ctx => { 
-      const P = p(ctx)
-      return new P(s)
+    try {
+      return  new p(s)
+      
+    } finally  {
+      return ctx => { 
+        const P = p(ctx)
+        return new P(s)
+      }      
     }
-
-    // try {
-    //   return  new p(s)
-      
-    // } catch (error) {
-      
-    // }
     
   }
   static invoke(p,s) {
 
-    return p(...s) || (ctx => p(ctx)(...s))
+    return function(ctx) {
+
+      const P = p(ctx)
+      return P(...s)
+    
+    }
   }
 
 }

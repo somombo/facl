@@ -107,6 +107,7 @@ export class Allow {
   private _actions: Action[]
 
   set actions(val: Action[]) {
+    
     this._actions = val.map(toUniformCase)
   }
 
@@ -146,8 +147,17 @@ export class Allow {
     return this.methods.has(toUniformCase(action).trim() as Action)
   }
 
-  isAllowedReq(req: Request): boolean {
-    return this.condition({req})
+  isAllowedReqIn(context: any = {}): boolean {
+    
+    let decision:any = this.condition
+
+    if (typeof this.condition === 'function') {
+      decision = this.condition(context) 
+    }
+ 
+    
+    return decision
+    
   }
 }
 

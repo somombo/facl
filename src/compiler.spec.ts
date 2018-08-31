@@ -188,7 +188,10 @@ describe('Compilation AST:', () => {
         },
         "ok": "hello",
         "another": {
-          "one": 6
+          "one": 6,
+          second(str:string){
+            return "somcho"+"!"
+          }
         },
         "mylist": "abcdefg".split(""),
         "myFunc": function(str, num){
@@ -204,7 +207,7 @@ describe('Compilation AST:', () => {
           combine(){
             return `Uli, ${this.greeting} ${this.age}`
           }
-        }     
+        }    
       
       }
   
@@ -267,7 +270,7 @@ describe('Compilation AST:', () => {
           }
        }
         const output = compile(ast)
-      //  console.log("compile ast for prop", output)
+       console.log("compile ast for prop", output.toString())
     
         expect(output).to.equal(9);
       })
@@ -397,6 +400,47 @@ describe('Compilation AST:', () => {
 
       
           expect(output).to.equal("I made this: 129");
+        }) 
+        
+        it('should  select then invoke single param function', () => {
+    
+
+  
+          // from another.second("somcho")
+          const ast: any = {
+            "class": "OPERATOR",
+            "type": "invoke",
+            "category": "binary",
+            "secondary": {
+               "class": "ITERABLE",
+               "type": "list",
+               "list": [
+                  {
+                     "class": "LITERAL",
+                     "type": "string",
+                     "value": "somcho"
+                  }
+               ]
+            },
+            "primary": {
+               "class": "OPERATOR",
+               "type": "select",
+               "category": "binary",
+               "secondary": {
+                  "class": "IDENTIFIER",
+                  "id": "second"
+               },
+               "primary": {
+                  "class": "IDENTIFIER",
+                  "id": "another"
+               }
+            }
+          }
+
+          const output = compile(ast)(ctx)
+
+      
+          expect(output).to.equal("somcho!");
         }) 
         
         it('should construct muilti-parameter Message (Map)', () => {

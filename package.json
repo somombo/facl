@@ -6,7 +6,7 @@
     "build": "npm run -s buildt && npm run -s buildp && npm run -s buildt -- --watch",
     "_test": "mocha --opts \"./mocha.opts\"  src/**/*.spec.ts",
     "test": "npm run -s _test -- --watch",
-    "_start": "mocha --opts \"./mocha.opts\" test/index.ts",
+    "_start": "mocha --opts \"./mocha.opts\" --exclude \"test/_.spec.ts\" test/index.ts ",
     "start": "npm run -s _start -- --watch"
   },
   "name": "facl",

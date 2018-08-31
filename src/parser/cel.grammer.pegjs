@@ -9,14 +9,12 @@ By Chisomo Sakala (c) 2018
 
 */
 
+/* left is `primary` and right is `secondary` operand. */ 
+/* Third operand is `tertiary` */
+// LTR Function TODO: Comment out. Must only be in `fire.grammer.pegjs` file
 
-{
-  // left is `primary` and right is `secondary` operand. 
-  function ltr(head, tail){
-    return tail.reduce( (t,h) => ({...h, primary: t}), head)
-  }
-  //Third operand is `tertiary`
-}
+// {  function ltr(head, tail){ return tail.reduce( (t,h) => ({...h, primary: t}), head) }  }
+
 
 // start = Expression
 
@@ -116,7 +114,7 @@ ExprList
     head:Expression __ tail:("," __ e:Expression {return e})* 
     { return { class: "ITERABLE", type: "list", list: [head, ...tail] } }
   )? 
-  { return all ? all : []}
+  { return all ? all : { class: "ITERABLE", type: "list", list: [] }}
 
 FieldInits
   = all:
@@ -125,7 +123,7 @@ FieldInits
     tail:("," __ k:IDENTIFIER __ ":" __ v:Expression {return [k,v]})* 
     { return { class: "ITERABLE", type: "dictionary", list: [head, ...tail] } }    
   )? 
-  { return all ? all : {}}
+  { return all ? all : { class: "ITERABLE", type: "dictionary", list: [] }}
 
 MapInits
   = all:
@@ -134,7 +132,7 @@ MapInits
     tail:("," __ k:Expression __ ":" __ v:Expression {return [k,v]})*
     { return { class: "ITERABLE", type: "map", list: [head, ...tail] } }
   )? 
-  { return all ? all : []}
+  { return all ? all : { class: "ITERABLE", type: "dictionary", list: [] }}
 
 
 
@@ -151,9 +149,9 @@ IDENTIFIER
   
 
 LITERAL
-  = value:UINT_LIT { return { class: "LITERAL", type: "uint", value } }
+  = value:FLOAT_LIT { return { class: "LITERAL", type: "double", value } }
+  / value:UINT_LIT { return { class: "LITERAL", type: "uint", value } }
   / value:INT_LIT { return { class: "LITERAL", type: "int", value } }
-  / value:FLOAT_LIT { return { class: "LITERAL", type: "double", value } }
   / value:BYTES_LIT { return { class: "LITERAL", type: "bytes", value } } // important: check for bytes before string 
   / value:STRING_LIT { return { class: "LITERAL", type: "string", value } } 
   / value:BOOL_LIT { return { class: "LITERAL", type: "bool", value } } 

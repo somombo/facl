@@ -19,13 +19,3 @@ export const WRITE_METHODS = [
 ].map(toUniformCase)
 
 
-// switch (ex) {
-//   case 'b': return "\b";
-//   case 'f': return "\f";
-//   case 'n': return "\n";
-//   case 'r': return "\r";
-//   case 't': return "\t";
-//   case '"': return "\"";
-//   case '\'': return "\'";
-//   case '\\': return "\\";
-// }

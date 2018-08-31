@@ -5,11 +5,11 @@ import 'mocha';
 // import { hello } from './hello-world';
 const hello = () => 'Hello world!'; 
 
-describe('Hello function', () => {
+// xdescribe('Hello function', () => {
 
-  it('should return hello world', () => {
-    const result = hello();
-    expect(result).to.equal('Hello world!');
-  });
+//   it('should return hello world', () => {
+//     const result = hello();
+//     expect(result).to.equal('Hello world!');
+//   });
 
-});
+// });

@@ -24,7 +24,7 @@ interface AST {
 function parse(rules_source: string): AST {
 
   const ast: AST  = parser.parse(rules_source)
-  writeFileSync( join(/* __dirname,  */'test/example_output_ast.json'),  JSON.stringify(ast) )
+  // writeFileSync( join(/* __dirname,  */'test/example_output_ast.json'),  JSON.stringify(ast) )
   return ast
 
 }
@@ -32,9 +32,9 @@ function parse(rules_source: string): AST {
 
 // internal function: exported only for unit test purposes
 export function _compile_(ast: AST): any {
+  // console.log("\n\nchecking ast recur:\n", ast)
   if(  (ast.class as TokenClass) === TokenClass.OPERATOR ){
-    // console.log("category", ast.category, ast)
-    // console.log("neg momo momo op:", ast)
+
     if(ast.category === "unary"){ 
 
       if( ast.type==="fully_qualify" ) {
@@ -54,7 +54,7 @@ export function _compile_(ast: AST): any {
 
 
       if( ast.type==="select" ) {
-       
+        
         return op[ ast.type ](
           _compile_(ast.primary), 
           ast.secondary.id
@@ -111,9 +111,8 @@ export function _compile_(ast: AST): any {
     //   throw "Context for IDENTIFIER is not available"
     // }
     
-    
-
-    return ( ctx ) => ctx[ast.id]
+    // console.log("the ast.id", ast.id)
+    return function(ctx) { return ctx[ast.id] }
   }
   
   else 
@@ -146,6 +145,7 @@ export function _compile_(ast: AST): any {
     
   } 
       
+  // console.error("Unknown AST: ", ast)
 
   throw "Token type unknown"
 
@@ -154,7 +154,10 @@ export function _compile_(ast: AST): any {
 export default function( rules_source: string, js = false ): ACL{
   // not js then compile using CEL DSL
   if (js) return (eval(rules_source) as Service).acl
-  const out = _compile_( parse(rules_source) )
+  const ast = parse(rules_source)
+
+
+  const out = _compile_( ast )
   // console.log("compiled out: ", (( out as Service).acl[0].allows[0] as any).condition())
   return ( out as Service).acl
 }

@@ -6,8 +6,21 @@ import compile from './compiler';
 export default function (rules_source: string, js = false){
 
   const acl = compile(rules_source, js)
-
+  const context = {}
   return (req: Request, res: Response, next: NextFunction) => {
+
+    // TODO: add support for more request functionalities
+    context["request"] = {
+
+      ...req,
+      accepts(str) {
+        return !!req.accepts(str)
+      },
+      auth: {
+        uid: 1234 // TODO: REMOVE THIS Somo, for test only!
+      }
+
+    }
 
     for (const rule of acl) {
       
@@ -25,7 +38,7 @@ export default function (rules_source: string, js = false){
         for (const allow of actionAuthdAllows) {
 
           /* get condition decision */
-          if (/*  condition is met */ allow.isAllowedReq(req) ) {
+          if (/*  condition is met */ allow.isAllowedReqIn(context) ) {
             return next()
             
           }
