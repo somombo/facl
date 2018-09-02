@@ -10,6 +10,23 @@ It is based on firebase' security rule syntax.
 
 This project aims to provide a similar and consistent syntax as that exemplified at the links above.
 
+## Installation / Running
+
+To install run:
+```
+npm install https://github.com/somombo/facl.git
+```
+> Not that, a published npm package will be available when this is more stable in future.
+
+
+> Take a look at the file `example.app.js` for a basic example of how to use this lib.
+
+To run example:
+```
+node node_module/facl/example.app.js
+```
+
+## Further Info
 Here is an example of what we are aiming to be able to write with this language. This would be for the purpose of securing or controlling access to REST endpoints in a firebase cloud functions context:
 
 ```
@@ -50,18 +67,11 @@ service cloud.functions.https {
 }
 ```
 
-## Installation / Running
-
-To install:
-```
-npm install
-```
-
-To run:
-```
-npm start
-```
-
-See also [XACML](https://en.wikipedia.org/wiki/XACML).
 
 
+See [Google Cel Spec](https://github.com/google/cel-spec), for the expression language's specification.
+
+
+And [XACML](https://en.wikipedia.org/wiki/XACML)
+
+Feel free to star / fork  or open an issue if you have any questions.
