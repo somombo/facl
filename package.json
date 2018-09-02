@@ -24,13 +24,13 @@
     "LICENSE",
     "Readme.md"
   ],
-  "description": "",
+  "description": "This is an access control language (Firestore inspired DSL) for securing backend REST api's written in node.js.",
   "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/somombo/facl.git"
   },
-  "keywords": [],
+  "keywords": ["firestore", "acl", "DSL", "express", "plugin"],
   "author": "Somo S. <somo@mombo.solutions>",
   "license": "MIT",
   "bugs": {

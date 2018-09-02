@@ -4,9 +4,10 @@ This is an access control language (DSL) for securing backend REST api's written
 
 It is based on firebase' security rule syntax.
 
-- See [Cloud Storage Security Rules Ref](https://firebase.google.com/docs/reference/security/storage/)
+- See [Cloud Storage Security Rules Ref](https://firebase.google.com/docs/reference/security/storage/) and [Firestore Security Rules Ref](https://firebase.google.com/docs/firestore/security/rules-conditions)
 
-- See [Firestore Security Rules Ref](https://firebase.google.com/docs/firestore/security/rules-conditions)
+- Also checkout [Google Cel Spec](https://github.com/google/cel-spec), for the expression language's specification.
+
 
 This project aims to provide a similar and consistent syntax as that exemplified at the links above.
 
@@ -16,7 +17,7 @@ To install run:
 ```
 npm install facl
 ```
-> Not that, a published npm package will be available when this is more stable in future.
+
 
 
 > Take a look at the file `example.app.js` for a basic example of how to use this lib.
@@ -68,10 +69,6 @@ service cloud.functions.https {
 ```
 
 
+Feel free to star / fork  or open an issue if you have any questions!
 
-See [Google Cel Spec](https://github.com/google/cel-spec), for the expression language's specification.
-
-
-And [XACML](https://en.wikipedia.org/wiki/XACML)
-
-Feel free to star / fork  or open an issue if you have any questions.
+Related project [XACML](https://en.wikipedia.org/wiki/XACML)
