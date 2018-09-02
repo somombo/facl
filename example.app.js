@@ -42,7 +42,7 @@ const app = express()
 
   
   
-  app.use(require('errorhandler')()) // optional error independent error handling plugin
+  // app.use(require('errorhandler')()) // optional error independent error handling plugin
   
   
   app.all('*', (req, res) => res.send(`<h1>Congratulations!</h1> <h4>You are authorized to see this.</h4> <pre>${Date.now()}</pre>`))
