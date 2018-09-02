@@ -14,7 +14,7 @@ This project aims to provide a similar and consistent syntax as that exemplified
 
 To install run:
 ```
-npm install https://github.com/somombo/facl.git
+npm install facl
 ```
 > Not that, a published npm package will be available when this is more stable in future.
 

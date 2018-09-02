@@ -20,7 +20,7 @@
   },
   "files": [
     "dist/",
-    "example.service.js",
+    "example.app.js",
     "LICENSE",
     "Readme.md"
   ],
