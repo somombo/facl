@@ -1,6 +1,19 @@
 # FACL
 
-This is an access control language (DSL) for securing backend REST api's written in node.js. 
+This is a firebase rules inspired access control language (DSL) for securing backend REST api's written in node.js. 
+
+> ## TL;DR
+>```js
+> // use as expressjs middleware
+> app.use(facl(`
+>   service https.cloudfunctions.net {
+>     match /path { 
+>       allow read: if true;
+>     }
+>   }
+> `));
+> // will allow HTTP GETs but not POSTs at '/path'
+>```
 
 It is based on firebase' security rule syntax.
 
@@ -24,7 +37,7 @@ npm install facl
 
 To run example:
 ```
-node node_module/facl/example.app.js
+node node_modules/facl/example.app.js
 ```
 
 ## Further Info
