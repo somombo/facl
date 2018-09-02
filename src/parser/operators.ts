@@ -1,113 +1,101 @@
-function isFunction(f){
-  // TODO: Find more precise way to test for Function if there's any
-    
-  return typeof f === 'function'
-       
-
-}
-
-export default class Operators {
+export default class self {
   static not(p) {
-    return !p
+    return ctx => !p(ctx)
   }
+
   static negative(p) {
-    return -p
+    return ctx => -p(ctx)
   }
 
   ////
-
-
   static multiply(p,s) {
-    return p * s
+    return ctx => p(ctx) * s(ctx)
   }
+
   static divide(p,s) {
-    return p / s
+    return ctx => p(ctx) / s(ctx)
   }
+
   static remainder(p,s) {
-    return p % s
+    return ctx => p(ctx) % s(ctx)
   }
+
   static add(p,s) {
-    return p + s
+    return ctx => p(ctx) + s(ctx)
   }
+
   static subtract(p,s) {
-    return p - s
+    return ctx => p(ctx) - s(ctx)
   }
+
   static less(p,s) {
-    return p < s
+    return ctx => p(ctx) < s(ctx)
   }
+
   static lessOrEqual(p,s) {
-    return p <= s
+    return ctx => p(ctx) <= s(ctx)
   }
+
   static greaterOrEqual(p,s) {
-    return p >= s
+    return ctx => p(ctx) >= s(ctx)
   }
+
   static greater(p,s) {
-    return p > s
+    return ctx => p(ctx) > s(ctx)
   }
+
   static equal(p,s) {
-    return p == s
+    return ctx => p(ctx) == s(ctx)
   }
+
   static notEqual(p,s) {
-    return p != s
+    return ctx => {
+
+      const result = p(ctx) != s(ctx)
+      
+      return result
+    }
   }
 
   static in(p,s){
-    return p.has ? p.has(s) : p.includes(s)
+    return ctx => p(ctx).has ? p(ctx).has(s) : p(ctx).includes(s)
   }
   
   static and(p,s) {
-    return p + s
+    return ctx => p(ctx) + s(ctx)
   }
+
   static or(p,s) {
-    return p + s
+    return ctx => p(ctx) + s(ctx)
   }
+
   static conditional(p,s,t) {
-    return t ? s : p // it's a right-to-left op by defn
+    return ctx => t(ctx) ? s(ctx) : p(ctx) // it's a right-to-left op by defn
   }
 
   ////
 
   static select(p,s) {
-    
-     if(p[s]) return p[s] 
       
-     return function(ctx){
-
-      const P = p(ctx)
-    
-      return P[s] 
-    
-    }
-  
-
-
-
+     return self.index(p,s) // select
     
   }
+
   static index(p,s) {
     
-    return p[s] || (ctx => p(ctx)[s])
+
+    return ctx => p(ctx)[s(ctx)] // index
   }
+
   static construct(p,s) {
-    try {
-      return  new p(s)
-      
-    } finally  {
-      return ctx => { 
-        const P = p(ctx)
-        return new P(s)
-      }      
-    }
+
+    return ctx => new (p(ctx))(s(ctx))  
     
   }
+  
   static invoke(p,s) {
 
-    return function(ctx) {
-
-      const P = p(ctx)
-      return P(...s)
-    
-    }
+    return ctx => p(ctx)(...s(ctx))
   }
 
 }

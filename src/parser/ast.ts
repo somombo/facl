@@ -148,16 +148,9 @@ export class Allow {
   }
 
   isAllowedReqIn(context: any = {}): boolean {
-    
-    let decision:any = this.condition
-
-    if (typeof this.condition === 'function') {
-      decision = this.condition(context) 
-    }
- 
-    
-    return decision
-    
+    const result =  this.condition(context)
+         
+    return result 
   }
 }
 
@@ -178,7 +171,7 @@ export function match(relativeRoute: string, ...children: Children){
 }
 
 export function allow(actions: string, condition: Condition = _ => false){
-  console.log("actions", actions)
+
   const actionsList: Action[] = actions
     .split(',')
     .map(a => a.trim())

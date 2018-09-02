@@ -1,11 +1,6 @@
 import { ACL, Service,  Match, Allow, Children} from "./parser/ast";
-import { service, match, allow } from "./parser/ast";
 import './parser' 
 
-import {join} from 'path'
-
-
-import { writeFileSync } from "fs";
 import op from './parser/operators'
 
 import { TokenClass } from './parser/ast'
@@ -32,9 +27,41 @@ function parse(rules_source: string): AST {
 
 // internal function: exported only for unit test purposes
 export function _compile_(ast: AST): any {
-  // console.log("\n\nchecking ast recur:\n", ast)
-  if(  (ast.class as TokenClass) === TokenClass.OPERATOR ){
 
+
+
+  
+  if(  TokenClass.SERVICE === (ast.class as TokenClass)  ) {
+
+    const matches: Match[] = (ast.matches as AST[]).map( _compile_ ) 
+    return new Service(ast.type, matches)
+
+  } else if (  TokenClass.CHILD === (ast.class as TokenClass)  ) {
+    
+    if (ast.type === 'match'){
+      
+      const children: Children = (ast.children as AST[]).map( _compile_ ) 
+      return new Match(
+        ast.route, 
+        ((children || []) as Allow[]).filter(c => c.constructor.name === Allow.name), 
+        ((children || []) as Match[]).filter(c => c.constructor.name === Match.name)  
+      )
+
+    }
+
+    if (ast.type === 'allow') {
+    
+      return new Allow(ast.actions, _compile_(ast.condition)) as Allow;
+    }
+
+    throw "`Child` tokens must be of `type=match` or `type=allow`"
+    
+  } 
+  else 
+  
+  if(  TokenClass.OPERATOR === (ast.class as TokenClass)  ){
+
+    
     if(ast.category === "unary"){ 
 
       if( ast.type==="fully_qualify" ) {
@@ -44,20 +71,15 @@ export function _compile_(ast: AST): any {
       return op[ ast.type ]( 
         _compile_(ast.primary) 
       )
-    } else if(ast.category === "tenary"){ 
-      return op[ ast.type ](
-        _compile_(ast.primary), 
-        _compile_(ast.secondary), 
-        _compile_(ast.tertiary)
-      )      
-    } else if(ast.category === "binary"){ 
 
+    } else if(ast.category === "binary") { 
 
+      
       if( ast.type==="select" ) {
         
         return op[ ast.type ](
           _compile_(ast.primary), 
-          ast.secondary.id
+          ctx => ast.secondary.id
         )
       }
 
@@ -70,84 +92,53 @@ export function _compile_(ast: AST): any {
 
     throw "Opertator category unknown."
 
-  }
+  } else if(ast.category === "tenary") { 
 
-  else 
+    return op[ ast.type ](
+      _compile_(ast.primary), 
+      _compile_(ast.secondary), 
+      _compile_(ast.tertiary)
+    )
 
-  if(  (ast.class as TokenClass) === TokenClass.LITERAL ) 
-    return ast.value
+  } else if (  TokenClass.LITERAL === (ast.class as TokenClass)  ) {
 
-  else
+    return ctx => ast.value
 
-  if(  (ast.class as TokenClass) === TokenClass.ITERABLE ) {
+  } else if (  TokenClass.ITERABLE === (ast.class as TokenClass)  ) {
     
     switch (ast.type) {
       case "dictionary":
 
-        return ast.list
-        .map( ([k,v]) => [k.id, _compile_(v)] )
+        return ctx => ast.list
+        .map( ([k,v]) => [k.id, _compile_(v)(ctx)] )
         .reduce( (t,h) => ({ ...t, [h[0]]: h[1] }), {} )
 
 
       case "map":
-        return new Map( 
+        return ctx => {
+        
+          
+          const m = new Map( 
           ast.list
-          .map( ([k,v]) => [_compile_(k), _compile_(v)] )
+            .map( ([k,v]) => [_compile_(k)(ctx), _compile_(v)(ctx)] )
         ) 
-
+          return m
+    
+  }
       case "list":
-        return ast.list.map(_compile_)     
-    }
-
-    throw "AST `ITERABLE` must be of `type` identical to  `dictionary`,`map` or `list`"
-
-  }
-
-  else 
-  
-  if(  (ast.class as TokenClass) === TokenClass.IDENTIFIER ) {
-    // if (!ctx) {
-    //   console.error("Missing Context for Ident. AST:", ast)
-    //   throw "Context for IDENTIFIER is not available"
-    // }
-    
-    // console.log("the ast.id", ast.id)
-    return function(ctx) { return ctx[ast.id] }
-  }
-  
-  else 
-
-  if(  (ast.class as TokenClass) === TokenClass.SERVICE ) {
-    const matches: Match[] = (ast.matches as AST[]).map( _compile_ ) 
-    return new Service(ast.type, matches);
+        return ctx => ast.list.map(i => _compile_(i)(ctx))     
   } 
   
-  else 
-  
-  if(  (ast.class as TokenClass) === TokenClass.CHILD ) {
-    
-    if (ast.type === 'match'){
+    throw "AST `ITERABLE` must be of `type` identical to  `dictionary`,`map` xor `list`"
       
-      const children: Children = (ast.children as AST[]).map( _compile_ ) 
-      return new Match(
-        ast.route, 
-        ((children || []) as Allow[]).filter(c => c.constructor.name === Allow.name), 
-        ((children || []) as Match[]).filter(c => c.constructor.name === Match.name)  
-      );
+  } else if (  TokenClass.IDENTIFIER === (ast.class as TokenClass)  ) {
+
+    return ctx => ctx[ast.id] 
     }
 
-    if (ast.type === 'allow'){
-      // console.log("ast.actions", ast)
-      return new Allow(ast.actions, _compile_(ast.condition)) as Allow;
-    }
-
-    throw "`Child` tokens must be of `type=match` or `type=allow`"
-    
-  } 
       
-  // console.error("Unknown AST: ", ast)
 
-  throw "Token type unknown"
+  throw new Error("Token type unknown")
 
 }
 
@@ -158,6 +149,6 @@ export default function( rules_source: string, js = false ): ACL{
 
 
   const out = _compile_( ast )
-  // console.log("compiled out: ", (( out as Service).acl[0].allows[0] as any).condition())
-  return ( out as Service).acl
+
+  return ( out as Service ).acl
 }
