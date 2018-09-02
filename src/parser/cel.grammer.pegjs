@@ -1,4 +1,7 @@
-
+// {  function __cel$ltr__(head, tail){ return tail.reduce( (t,h) => ({...h, primary: t}), head) }  }
+// LTR Function TODO: Comment out. Must only be in `fire.grammer.pegjs` file
+/* left is `primary` and right is `secondary` operand. */ 
+/* Third operand is `tertiary` */
 
 /* 
 Cel Grammer
@@ -9,14 +12,47 @@ By Chisomo Sakala (c) 2018
 
 */
 
-/* left is `primary` and right is `secondary` operand. */ 
-/* Third operand is `tertiary` */
-// LTR Function TODO: Comment out. Must only be in `fire.grammer.pegjs` file
-
-// {  function ltr(head, tail){ return tail.reduce( (t,h) => ({...h, primary: t}), head) }  }
 
 
-// start = Expression
+start = Expression
+
+//////////////////////////////////////////////////
+///////////     Data Structures 
+//////////////////////////////////////////////////
+
+  
+List // "ExprList"
+  = all:
+  (
+    head:Expression __ tail:("," __ e:Expression {return e})* 
+    { return { class: "ITERABLE", type: "list", list: [head, ...tail] } }
+  )? 
+  { return all ? all : { class: "ITERABLE", type: "list", list: [] }}
+
+Dictionary // "FieldInits"
+  = all:
+  (
+    head:(k:IDENTIFIER __ ":" __ v:Expression {return [k,v]}) __ 
+    tail:("," __ k:IDENTIFIER __ ":" __ v:Expression {return [k,v]})* 
+    { return { class: "ITERABLE", type: "dictionary", list: [head, ...tail] } }    
+  )? 
+  { return all ? all : { class: "ITERABLE", type: "dictionary", list: [] }}
+
+Map // "MapInits"
+  = all:
+  (
+    head:(k:Expression __ ":" __ v:Expression {return [k,v]}) __ 
+    tail:("," __ k:Expression __ ":" __ v:Expression {return [k,v]})*
+    { return { class: "ITERABLE", type: "map", list: [head, ...tail] } }
+  )? 
+  { return all ? all : { class: "ITERABLE", type: "map", list: [] }}
+
+
+
+
+
+
+
 
 //////////////////////////////////////////////////
 ///////////     Expressions
@@ -30,21 +66,21 @@ Expression // "Common Expression" i.e. CEL
 
 
 Disjunction // "OR"
-  = head:Conjunction tail:(DisjunctionOperation)* { return ltr(head, tail) } 
+  = head:Conjunction tail:(DisjunctionOperation)* { return __cel$ltr__(head, tail) } 
 DisjunctionOperation
   = __ "||" __ secondary:Conjunction 
   { return {class: "OPERATOR", type:"or", category:"binary", secondary} }
 
 
 Conjunction // "AND"
-  = head:Relation tail:(ConjunctionOperation)* { return ltr(head, tail) } 
+  = head:Relation tail:(ConjunctionOperation)* { return __cel$ltr__(head, tail) } 
 ConjunctionOperation
   = __ "&&" __ secondary:Relation 
   { return {class: "OPERATOR", type:"and", category:"binary", secondary} }
 
 
 Relation // >,<,= etc
-  = head:Addition tail:(RelationOperation)* { return ltr(head, tail) } 
+  = head:Addition tail:(RelationOperation)* { return __cel$ltr__(head, tail) } 
 RelationOperation
   = __ type:RELATION_SYMBOL __ secondary:Addition 
   { return {class: "OPERATOR", type, category:"binary", secondary} }
@@ -58,7 +94,7 @@ RELATION_SYMBOL
   / " in " {return 'in'}
 
 Addition // +,-
-  = head:Multiplication tail:(AdditionOperation)* { return ltr(head, tail) } 
+  = head:Multiplication tail:(AdditionOperation)* { return __cel$ltr__(head, tail) } 
 AdditionOperation
   = __ type:SUM_SYMBOL __ secondary:Multiplication 
   { return {class: "OPERATOR", type, category:"binary", secondary} }
@@ -68,7 +104,7 @@ SUM_SYMBOL
 
 
 Multiplication // *,/,%
-  = head:Unary tail:(MultiplicationOperation)* { return ltr(head, tail) } 
+  = head:Unary tail:(MultiplicationOperation)* { return __cel$ltr__(head, tail) } 
 MultiplicationOperation
   = __ type:PRODUCT_SYMBOL __ secondary:Unary 
   { return {class: "OPERATOR", type, category:"binary", secondary} }
@@ -84,56 +120,20 @@ Unary
 
 
 Member
-  = head:(LITERAL / Atomic) tail:(MemberOperation)* { return ltr(head, tail) }
+  = head:(LITERAL / Atomic) tail:(MemberOperation)* { return __cel$ltr__(head, tail) }
 MemberOperation
   = __ "." __ secondary:Atomic { return { class: "OPERATOR", type:"select", category:"binary", secondary } }
   / __ "[" __ secondary:Expression __ "]" { return { class: "OPERATOR", type:"index", category:"binary", secondary } }
-  / __ "{" __ secondary:FieldInits __ "}" { return { class: "OPERATOR", type:"construct", category:"binary", secondary } }
-  / __ "(" __ secondary:ExprList __ ")" { return { class: "OPERATOR", type:"invoke", category:"binary", secondary } }
+  / __ "{" __ secondary:Dictionary __ "}" { return { class: "OPERATOR", type:"construct", category:"binary", secondary } }
+  / __ "(" __ secondary:List __ ")" { return { class: "OPERATOR", type:"invoke", category:"binary", secondary } }
  
  
 Atomic
-  = "[" __ exprList:ExprList __ "]" { return exprList }
-  / "{" __ mapInits:MapInits __ "}" { return mapInits }
+  = "[" __ exprList:List __ "]" { return exprList }
+  / "{" __ mapInits:Map __ "}" { return mapInits }
   / "(" __ expr:Expression __ ")" { return expr }
   / "." __ primary:IDENTIFIER { return {class: "OPERATOR", type: "fully_qualify", category:"unary", primary}}
   / IDENTIFIER
-
-
-
-//////////////////////////////////////////////////
-///////////     Utilities
-//////////////////////////////////////////////////
-
-
-
-  
-ExprList
-  = all:
-  (
-    head:Expression __ tail:("," __ e:Expression {return e})* 
-    { return { class: "ITERABLE", type: "list", list: [head, ...tail] } }
-  )? 
-  { return all ? all : { class: "ITERABLE", type: "list", list: [] }}
-
-FieldInits
-  = all:
-  (
-    head:(k:IDENTIFIER __ ":" __ v:Expression {return [k,v]}) __ 
-    tail:("," __ k:IDENTIFIER __ ":" __ v:Expression {return [k,v]})* 
-    { return { class: "ITERABLE", type: "dictionary", list: [head, ...tail] } }    
-  )? 
-  { return all ? all : { class: "ITERABLE", type: "dictionary", list: [] }}
-
-MapInits
-  = all:
-  (
-    head:(k:Expression __ ":" __ v:Expression {return [k,v]}) __ 
-    tail:("," __ k:Expression __ ":" __ v:Expression {return [k,v]})*
-    { return { class: "ITERABLE", type: "map", list: [head, ...tail] } }
-  )? 
-  { return all ? all : { class: "ITERABLE", type: "dictionary", list: [] }}
-
 
 
 
@@ -142,6 +142,9 @@ MapInits
 ////////////////////////////////////
 ///   Literals
 ///////////////////////////////////
+
+
+
 
 IDENTIFIER
   = (!RESERVED / RESERVED) [_a-zA-Z][_a-zA-Z0-9]*

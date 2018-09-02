@@ -1,3 +1,15 @@
+{
+
+  global["__fire$service__"] = function(name, matches){ return { class: "SERVICE", type:name, matches } }
+  global["__fire$match__"] = function(route, children){ return { class: "CHILD", type: "match",  route, children} }    
+  global["__fire$allow__"] = function(actions, condition){ return { class: "CHILD", type: "allow", actions, condition } }
+
+  global["__cel$ltr__"] = function(head, tail){
+    return tail.reduce( (t,h) => ({...h, primary: t}), head)
+  }
+}
+
+
 /* 
 // By Chisomo M. Sakala, Mombo Solutions
 
@@ -28,17 +40,6 @@ service https.cloudfunctions.net {
 */
 
 
-{
-  function service(name, matches){ return { class: "SERVICE", type:name, matches } }
-  function match(route, children){ return { class: "CHILD", type: "match",  route, children} }    
-  function allow(actions, condition){ return { class: "CHILD", type: "allow", actions, condition } }
-
-	function ltr(head, tail){
-    return tail.reduce( (t,h) => ({...h, primary: t}), head)
-  }
-}
-
-
 // start = Service
 
 ///////////////////////////////////////////////////////////////
@@ -47,7 +48,7 @@ service https.cloudfunctions.net {
 Service 
   = __ "service" _ type:ServiceType _ "{" __ 
       matches:Matches __ 
-    "}" __ { return service(type, matches) }
+    "}" __ { return __fire$service__(type, matches) }
 
 ServiceType
   = "https.cloudfunctions.net" // change to match other possibilites
@@ -59,7 +60,7 @@ Matches
 
 Match
   = "match" _ route:Route _ "{" children:Children "}" {
-  		return match(route, children)
+  		return __fire$match__(route, children)
   	}
 
 Route
@@ -91,7 +92,7 @@ Child
 
 Allow
   = "allow" _ actions:Actions _ ":" _ "if" __ expr:Expression __ ";" __  {
-  		return allow(actions, expr)
+  		return __fire$allow__(actions, expr)
   	}
 
 Condition
@@ -110,8 +111,6 @@ Action
   / 'GET'i 
   / 'HEAD'i
   / 'OPTIONS'i
-  / 'TRACE'i
-  / 'CONNECT'i
   / 'DELETE'i
   / 'PATCH'i
   / 'POST'i
