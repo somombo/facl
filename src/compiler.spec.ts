@@ -4,12 +4,41 @@ import 'mocha';
 
 import {_compile_ as compile} from './compiler'
 
+// for foo.bar.wow or .foo.bar.wow
+const ctx = {
+  "foo": {
+    "bar": {
+      "wow": 133
+    }
+  },
+  "ok": "hello",
+  "another": {
+    "one": 6,
+    second(str:string){
+      return "somcho"+"!"
+    }
+  },
+  "mylist": "abcdefg".split(""),
+  "myFunc": function(str, num){
+    return `I made this: ${(str.length + num)}`  
+  },
+  "MyMessage": class {
+    public greeting
+    public age
+    constructor({greeting, age}){
+      this.greeting = greeting
+      this.age = age
+    } 
+    combine(){
+      return `Uli, ${this.greeting} ${this.age}`
+    }
+  }    
+}
+
 
 describe('Compilation AST:', () => {
   
   describe('for el expressions', () => {
-
-
 
     describe('Arithmetic:', () => {
       
@@ -21,7 +50,7 @@ describe('Compilation AST:', () => {
             "value": 3
           }
       
-          expect(compile(ast)).to.equal(3);
+          expect(compile(ast)(ctx)).to.equal(3);
         });
       
         it('should resolve negative integer', () => {
@@ -35,7 +64,7 @@ describe('Compilation AST:', () => {
                "type": "int",
                "value": 1
             }
-         } as any)
+          } as any)(ctx)
       
           expect(value).to.equal(-1);
         });
@@ -57,7 +86,7 @@ describe('Compilation AST:', () => {
             }
           }
       
-          expect(compile(ast)).to.equal(2);
+          expect(compile(ast)(ctx)).to.equal(2);
         })
   
   
@@ -114,7 +143,7 @@ describe('Compilation AST:', () => {
          }
       
       
-          expect(compile(ast)).to.equal(-99);
+          expect(compile(ast)(ctx)).to.equal(-99);
         });      
     });
   
@@ -170,46 +199,73 @@ describe('Compilation AST:', () => {
                 }
              ]
           ]
-       }
-    
-        expect(compile(ast)).to.deep.equal(
+        }
+        const output = compile(ast)
+        const value = output(ctx)
+        // value.forEach((k, v, m) => console.log(`key:${k} value:${v} map:${m}`))
+
+        expect(value).to.deep.equal(
           new Map([ [true,3142], ["helloworld", 29] ] as any) 
-        );
-      });      
-    });
+        )
+      }) 
+
+      it('should resolve a simple Mapping ', () => {
+        const ast: any = {
+          "class": "ITERABLE",
+          "type": "map",
+          "list": [
+             [
+                {
+                   "class": "LITERAL",
+                   "type": "string",
+                   "value": "foo"
+                },
+                {
+                   "class": "LITERAL",
+                   "type": "string",
+                   "value": "bar"
+                }
+             ]
+          ]
+       }
+
+        const output = compile(ast)
+        // console.log("map oout", output)
+        const value = output(ctx)
+
+        // value.forEach((k, v, m) => console.log(`key:${k} value:${v} map:${m}`))
+        //  console.log("Mapout: ", output().entries())
+
+        expect(value).to.deep.equal(
+          new Map([ ["foo","bar"] ] as any) 
+        )
+      })      
+    
+
+      it('should resolve a simple List ', () => {
+        const ast: any = {
+          "class": "ITERABLE",
+          "type": "list",
+          "list": [
+             {
+                "class": "LITERAL",
+                "type": "string",
+                "value": "first"
+             }
+          ]
+       }
+
+        const output = compile(ast)
+        const value = output(ctx)
+
+        expect(value).to.deep.equal(
+          ["first"] 
+        )
+      })      
+    })
   
     describe('Field selection and Identifiers', () => {
-      // for foo.bar.wow or .foo.bar.wow
-      const ctx = {
-        "foo": {
-          "bar": {
-            "wow": 133
-          }
-        },
-        "ok": "hello",
-        "another": {
-          "one": 6,
-          second(str:string){
-            return "somcho"+"!"
-          }
-        },
-        "mylist": "abcdefg".split(""),
-        "myFunc": function(str, num){
-          return `I made this: ${(str.length + num)}`  
-        },
-        "MyMessage": class {
-          public greeting
-          public age
-          constructor({greeting, age}){
-            this.greeting = greeting
-            this.age = age
-          } 
-          combine(){
-            return `Uli, ${this.greeting} ${this.age}`
-          }
-        }    
-      
-      }
+
   
       it('should resolve Identifier', () => {
     
@@ -269,8 +325,8 @@ describe('Compilation AST:', () => {
              "value": "The World"
           }
        }
-        const output = compile(ast)
-       console.log("compile ast for prop", output.toString())
+        const output = compile(ast)(ctx)
+      //  console.log("compile ast for prop", output.toString())
     
         expect(output).to.equal(9);
       })

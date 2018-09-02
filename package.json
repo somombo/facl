@@ -1,13 +1,17 @@
 {
   "scripts": {
     "_buildp": "node tools/build_parser.js",
+    "_buildt": "tsc",
+    "_unit": "mocha --opts \"./mocha.opts\"  src/**/*.spec.ts",
+    "_integration": "mocha --opts \"./mocha.opts\" --exclude \"test/_.spec.ts\" test/index.ts  ",
+    "dev": "ts-node test",
+    "unit": "npm run -s _unit -- --watch",
+    "integration": "npm run -s _integration -- --watch",
+    "buildt": "tsc --watch",
     "buildp": "nodemon tools/build_parser.js",
-    "buildt": "tsc",
-    "build": "npm run -s buildt && npm run -s buildp && npm run -s buildt -- --watch",
-    "_test": "mocha --opts \"./mocha.opts\"  src/**/*.spec.ts",
-    "test": "npm run -s _test -- --watch",
-    "_start": "mocha --opts \"./mocha.opts\" --exclude \"test/_.spec.ts\" test/index.ts ",
-    "start": "npm run -s _start -- --watch"
+    "build": "npm run -s _buildt && npm run -s _buildp",
+    "test": "npm run -s _unit && npm run -s _integration",
+    "start": "npm run -s _build && node example.app.js"
   },
   "name": "facl",
   "version": "0.0.1",
@@ -29,7 +33,7 @@
   "homepage": "https://github.com/somombo/facl#readme",
   "dependencies": {
     "express": "^4.16.3",
-    "path-to-regexp": "^2.2.1",
+    "path-to-regexp": "^2.4.0",
     "pegjs": "^0.10.0",
     "request": "^2.88.0"
   },
@@ -40,7 +44,7 @@
     "@types/http-proxy-middleware": "^0.17.5",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
-    "@types/node": "^10.7.1",
+    "@types/node": "^10.9.4",
     "@types/request": "^2.47.1",
     "@types/supertest": "^2.0.5",
     "body-parser": "^1.18.3",
@@ -51,10 +55,10 @@
     "istanbul": "^0.4.5",
     "mocha": "^5.2.0",
     "nock": "^9.6.1",
-    "nodemon": "^1.18.3",
+    "nodemon": "^1.18.4",
     "nps": "^5.9.3",
     "supertest": "^3.1.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.0.1"
+    "typescript": "^3.0.3"
   }
 }

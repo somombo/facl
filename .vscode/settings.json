@@ -1,28 +1,12 @@
 {
     "typescript.tsdk": "node_modules\\typescript\\lib",
-    "mocha.files.glob": "**/*.spec.ts",
-    // "mocha.files.glob": "src/**/*.spec.ts",
+    // "mocha.files.glob": "**/*.spec.ts",
+    "mocha.files.glob": "src/**/*.spec.ts",
     // "mocha.files.glob": "test/index.ts",
     // "mocha.files.glob": "(src/compiler.spec.ts|test/index.ts)",
     // "mocha.files.glob": ["src/compiler.spec.ts", "test/index.ts"],
     // "mocha.files.glob": "*(src/**/*.spec.ts | test/**/*.ts)",
     "mocha.requires": [
         "ts-node/register"
-    ],
-    "mocha.coverage": {
-        "enable": false,
-        "decoration": false,
-        "runWithInterval": false,
-        "autoUpdateInterval": 20000,
-        "activeOnStart": false,
-        "runAfterTest": false,
-        "runCoverageAfterFileSave": false,
-        "reporters": []
-    },
-    // "mocha.sideBarOptions": {
-    //     "lens": false,
-    //     "decoration": false,
-    //     "autoUpdateTime": 2000,
-    //     "showDebugTestStatus": true
-    // },    
+    ]
 }

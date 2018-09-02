@@ -3,17 +3,17 @@ service https.cloudfunctions.net {
 
     match /my_apis/{api}/endpoints {
       match /{endpoint=**} {
-        allow read, write: if request.auth.uid;
+        allow read, write: if request.auth.uid != null;
       }
     }
-    /* Multi line comment supported */
+    /* multi-line comments now supported */
     allow read: if true; 
 
     match /other_api/{other_endpoint} {
     
-      allow get: if request.accepts("json");  
+      allow patch: if request.is("json");  
         
-      allow post, put, delete: if request.body;  
+      allow post, put, delete: if request.body != null;  
     
     }     
   }

@@ -1,8 +1,8 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync } from "fs";
 import * as peg  from "pegjs";
 import {join} from 'path'
 
-console.log("Momo JIT")
+console.log(">>> Recreating JIT Parser <<<\n")
 const grammerSource = `
   ${readFileSync(join(__dirname, './fire.grammer.pegjs'), { encoding: "utf8"})}
 

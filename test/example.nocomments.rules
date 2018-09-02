@@ -6,7 +6,7 @@ service https.cloudfunctions.net {
         allow read, write: if request.auth.uid != null;
       }
     }
-
+    /* multi-line comments now supported */
     allow read: if true; 
 
     match /other_api/{other_endpoint} {
