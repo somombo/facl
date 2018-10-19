@@ -14,7 +14,7 @@
     "start": "npm run -s _build && node example.app.js"
   },
   "name": "facl",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "node": ">= 8.0.0"
   },
