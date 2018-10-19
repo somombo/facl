@@ -1,8 +1,6 @@
 import * as express from 'express';
-import facl from '../src';
+import * as facl from '../src';
 
-import { join } from 'path';
-import { readFileSync } from 'fs'
 import * as errorhandler from 'errorhandler'
 import { json, raw, text, urlencoded } from 'body-parser'
 
@@ -19,7 +17,7 @@ export default function(rules_path: string, parseBody = true) {
 
   }
 
-  app.use(facl( readFileSync(join(__dirname, rules_path), { encoding: "utf8"}) ))
+  app.use( facl.fromFile(rules_path) )
   
   
 

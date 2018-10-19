@@ -11,6 +11,8 @@ import makeApp from './app';
 
 import { Buffer } from 'buffer'
 import {READ_METHODS,WRITE_METHODS} from '../src/utils'
+import { join } from 'path';
+
 const METHODS = [...READ_METHODS,...WRITE_METHODS]
 
 
@@ -18,7 +20,7 @@ const METHODS = [...READ_METHODS,...WRITE_METHODS]
 // const rules_path= '/example.service.js'
 // const rules_path= '/example.nocomments.rules'
 const rules_path= '/example.simple.rules'
-const app = makeApp(rules_path)
+const app = makeApp( join(__dirname, rules_path))
 
 if(global["describe"]){ // TODO: find better test for running in mocha environment
 

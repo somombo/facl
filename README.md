@@ -2,19 +2,6 @@
 
 This is a firebase rules inspired access control language (DSL) for securing backend REST api's written in node.js. 
 
-> ## TL;DR
->```js
-> // use as expressjs middleware
-> app.use(facl(`
->   service https.cloudfunctions.net {
->     match /path { 
->       allow read: if true;
->     }
->   }
-> `));
-> // will allow HTTP GETs but not POSTs at '/path'
->```
-
 It is based on firebase' security rule syntax.
 
 - See [Cloud Storage Security Rules Ref](https://firebase.google.com/docs/reference/security/storage/) and [Firestore Security Rules Ref](https://firebase.google.com/docs/firestore/security/rules-conditions)
@@ -28,17 +15,47 @@ This project aims to provide a similar and consistent syntax as that exemplified
 
 To install run:
 ```
-npm install facl
+$ npm install facl
 ```
 
+## Usage
+ Use as expressjs middleware created from directly from inline source code like:
+```js
+ import * as facl from 'facl'
+ app.use(facl.fromSource(`
+   service https.cloudfunctions.net {
+     match /path { 
+       allow read: if true;
+     }
+   }
+ `));
+ // will allow HTTP GETs but not POSTs at '/path'
+```
+ 
 
+Alternatively, you can pull in the rules from a local file as in:
+
+```js
+ const facl = require('facl') // feel free to use commonjs
+ app.use(facl.fromFile('/path/to/example.simple.rules'))
+```
+
+ The functions `fromSource` and `fromFile` are only intended to be used for development purposes.
+ 
+ In production, simply store the rules in memory (as a string) in the `FACL_ACCESS_CONTROL_RULES` environment variable and then:
+
+```ts 
+ import facl from 'facl' // Then import default for production. Or do commonjs equivalent 
+ app.use(facl()) // Alternatively, you can pass in a custom env. varName e.g `facl('MY_ENV_VAR')`
+```
 
 > Take a look at the file `example.app.js` for a basic example of how to use this lib.
+> To the run example:
+> ```
+> $ node node_modules/facl/example.app.js
+> ```
 
-To run example:
-```
-node node_modules/facl/example.app.js
-```
+
 
 ## Further Info
 Here is an example of what we are aiming to be able to write with this language. This would be for the purpose of securing or controlling access to REST endpoints in a firebase cloud functions context:

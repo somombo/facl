@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import { parse } from 'url';
 
 import compile from './compiler';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-export default function (rules_source: string, js = false){
+function facl(rules_source: string, js = false){
 
   const acl = compile(rules_source, js)
   const context = {}
@@ -80,3 +82,20 @@ export default function (rules_source: string, js = false){
 
   }
 }
+
+function fromFile(path: string) {
+  return facl( readFileSync(path, { encoding: "utf8"}) )
+}
+
+function fromSource(code: string) {
+  return facl( code )
+}
+
+function fromEnvironment(varName: string = 'FACL_RULES') {
+  return facl( process.env[varName] )
+}
+
+
+
+export { fromFile, fromSource, fromEnvironment }
+export default fromEnvironment
