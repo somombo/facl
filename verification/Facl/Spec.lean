@@ -115,4 +115,16 @@ def decide {C : Type} (eval : C → List Cap → Request → Outcome)
     else if !applicable then .deny .noAllowForMethod
     else .deny .conditionsNotMet
 
+/-- Rebuild a path from a pattern and captures (inverse of matching). -/
+def instGo (rest : Bool) : List Seg → List Cap → Option (List String)
+  | [], caps =>
+    if rest then (match caps with | [.path r] => some r | _ => none)
+    else if caps = [] then some [] else none
+  | .lit s :: ss, caps => (instGo rest ss caps).map (s :: ·)
+  | .var :: ss, .str x :: cs => (instGo rest ss cs).map (x :: ·)
+  | .var :: _, _ => none
+
+def instantiate (p : Pattern) (caps : List Cap) : Option (List String) :=
+  instGo p.rest p.segs caps
+
 end Facl

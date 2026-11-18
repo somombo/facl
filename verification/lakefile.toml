@@ -12,3 +12,7 @@ name = "Facl"
 [[lean_lib]]
 name = "FaclCore"
 globs = ["FaclCore.+"]
+
+# Proved with `sorry` for lake comparator, so never a default target.
+[[lean_lib]]
+name = "Challenge"

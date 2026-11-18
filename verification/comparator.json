@@ -1,0 +1,17 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Facl",
+  "theorem_names": [
+    "Facl.combine_eq_allow_iff",
+    "Facl.match_length_of_not_rest",
+    "Facl.match_instantiate",
+    "Facl.decide_eq_allow_iff",
+    "Facl.default_deny",
+    "Facl.decide_perm",
+    "Facl.decide_mono",
+    "FaclCore.decide.combine_spec",
+    "FaclCore.decide.combine_allow_iff"
+  ],
+  "definition_names": [],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
+}

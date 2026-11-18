@@ -1,17 +1,10 @@
 import Facl.Theorems
+import Facl.Lift
 import FaclCore.Funs
 
 open Aeneas Aeneas.Std Aeneas.Std.Result
 
 namespace FaclCore.decide
-
-def outcomeToSpec : Outcome → Facl.Outcome
-  | .Granted => .granted
-  | .NotGranted => .notGranted
-
-def verdictToSpec : Verdict → Facl.Verdict
-  | .Allow => .allow
-  | .Deny => .deny
 
 /-- The loop folds the remaining outcomes into the grant flag. -/
 private theorem combine_loop_spec (outs : Slice Outcome) (granted : Bool) (i : Usize)

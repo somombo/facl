@@ -62,11 +62,15 @@ jobs:
           extra_nix_config: |
             extra-substituters = https://hacl.cachix.org
             extra-trusted-public-keys = hacl.cachix.org-1:FzsZ2xsByOwKwIWNPII7yMOelJNDZ12mDAj3d1eGX0c=
-      - name: Regenerate and check the Lean extraction
+      - name: Install bubblewrap for the lake comparator sandbox
         run: |
-          verification/extract.sh
-          git add --intent-to-add --force -- verification/FaclCore
-          git diff --exit-code HEAD -- verification/FaclCore
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bubblewrap
+          # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor.
+          if ! bwrap --ro-bind / / --dev /dev --proc /proc true; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            bwrap --ro-bind / / --dev /dev --proc /proc true
+          fi
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: verification
@@ -74,3 +78,5 @@ jobs:
           build: true
           build-args: --wfail
           use-mathlib-cache: true
+      - name: Check the extraction, then the proofs with lake comparator
+        run: verification/check.sh --paranoid
