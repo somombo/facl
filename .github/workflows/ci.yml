@@ -53,29 +53,24 @@ jobs:
       - run: npm test
         working-directory: packages/facl
 
-  lean:
+  aeneas:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            extra-substituters = https://hacl.cachix.org
+            extra-trusted-public-keys = hacl.cachix.org-1:FzsZ2xsByOwKwIWNPII7yMOelJNDZ12mDAj3d1eGX0c=
+      - name: Regenerate and check the Lean extraction
+        run: |
+          verification/extract.sh
+          git add --intent-to-add --force -- verification/FaclCore
+          git diff --exit-code HEAD -- verification/FaclCore
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: verification
+          auto-config: false
           build: true
-
-  # Experimental: extraction with Charon and Aeneas. Failures do not block.
-  aeneas:
-    name: aeneas (experimental)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v27
-        with:
-          extra_nix_config: experimental-features = nix-command flakes
-      - name: Extract LLBC with Charon
-        working-directory: crates/facl-core
-        run: nix run github:aeneasverif/aeneas#charon -- cargo --preset=aeneas
-      - name: Translate to Lean with Aeneas
-        run: |
-          llbc=$(ls crates/facl-core/*.llbc | head -n 1)
-          nix run github:aeneasverif/aeneas -- -backend lean -loops-to-rec -split-files -dest verification/Extract "$llbc"
+          build-args: --wfail
+          use-mathlib-cache: true

@@ -75,5 +75,8 @@ typings/
 # Rust
 /target
 
+# Charon extraction output
+*.llbc
+
 # Generated wasm build (see packages/facl)
 /packages/facl/wasm/
