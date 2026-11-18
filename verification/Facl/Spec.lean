@@ -3,26 +3,26 @@ Mirrors `facl-core` (see .ignore/plans/facl-v0.3-impl-notes.md).
 Conditions are abstract: `decide` takes the evaluator as a parameter. -/
 namespace Facl
 
-/-- Rust `Seg { Lit(Vec<u8>), Var }`. Deviation: literals are `String`, not bytes. -/
-inductive Seg where
-  | lit (s : String)
+/-- Rust `Seg { Lit(Vec<u8>), Var }`, generic over the segment type. -/
+inductive Seg (α : Type) where
+  | lit (s : α)
   | var
   deriving DecidableEq, Repr
 
 /-- Rust `Pattern { segs, rest }`. -/
-structure Pattern where
-  segs : List Seg
+structure Pattern (α : Type) where
+  segs : List (Seg α)
   rest : Bool
   deriving DecidableEq, Repr
 
 /-- A captured value: Rust `Value::Str` (a `Var`) or `Value::List` of `Str` (the rest). -/
-inductive Cap where
-  | str (s : String)
-  | path (segs : List String)
+inductive Cap (α : Type) where
+  | str (s : α)
+  | path (segs : List α)
   deriving DecidableEq, Repr
 
 /-- Segment-by-segment matching; captures come out in order. -/
-def matchGo (rest : Bool) : List Seg → List String → Option (List Cap)
+def matchGo {α : Type} [DecidableEq α] (rest : Bool) : List (Seg α) → List α → Option (List (Cap α))
   | [], path =>
     if rest then some [.path path] else if path = [] then some [] else none
   | .lit s :: ss, x :: xs => if s = x then matchGo rest ss xs else none
@@ -31,7 +31,8 @@ def matchGo (rest : Bool) : List Seg → List String → Option (List Cap)
 
 /-- Rust `match_pattern`. Without `rest` the path length must equal the pattern's;
 with `rest` the pattern matches a prefix and the remainder is the last capture. -/
-def matchPattern (p : Pattern) (path : List String) : Option (List Cap) :=
+def matchPattern {α : Type} [DecidableEq α] (p : Pattern α) (path : List α) :
+    Option (List (Cap α)) :=
   matchGo p.rest p.segs path
 
 /-- Rust `Outcome`. `notGranted` covers false, error and non-boolean. -/
@@ -68,18 +69,18 @@ structure Allow (Cond : Type) where
   methods : Nat
   cond : Cond
 
-structure Rule (Cond : Type) where
-  pattern : Pattern
+structure Rule (α : Type) (Cond : Type) where
+  pattern : Pattern α
   allows : List (Allow Cond)
 
-structure Policy (Cond : Type) where
-  rules : List (Rule Cond)
+structure Policy (α : Type) (Cond : Type) where
+  rules : List (Rule α Cond)
 
 /-- Rust `Request` restricted to what the spec needs: a method bit and canonical segments.
 The `request` and `context` values are folded into the abstract evaluator. -/
-structure Request where
+structure Request (α : Type) where
   method : Nat
-  path : List String
+  path : List α
 
 /-- An allow is applicable when its mask shares a bit with the request's method. -/
 def Allow.applies {C : Type} (a : Allow C) (m : Nat) : Bool :=
@@ -92,19 +93,19 @@ def methodBit : String → Nat
   | _ => 0
 
 /-- Outcomes of the applicable allows of one rule (empty if the rule does not match). -/
-def ruleOutcomes {C : Type} (eval : C → List Cap → Request → Outcome)
-    (r : Rule C) (req : Request) : List Outcome :=
+def ruleOutcomes {α C : Type} [DecidableEq α] (eval : C → List (Cap α) → Request α → Outcome)
+    (r : Rule α C) (req : Request α) : List Outcome :=
   match matchPattern r.pattern req.path with
   | none => []
   | some caps => (r.allows.filter (·.applies req.method)).map (fun a => eval a.cond caps req)
 
-def outcomes {C : Type} (eval : C → List Cap → Request → Outcome)
-    (p : Policy C) (req : Request) : List Outcome :=
+def outcomes {α C : Type} [DecidableEq α] (eval : C → List (Cap α) → Request α → Outcome)
+    (p : Policy α C) (req : Request α) : List Outcome :=
   p.rules.flatMap (ruleOutcomes eval · req)
 
 /-- Rust `decide`: `matched`, `applicable`, then `combine`. -/
-def decide {C : Type} (eval : C → List Cap → Request → Outcome)
-    (p : Policy C) (req : Request) : Decision :=
+def decide {α C : Type} [DecidableEq α] (eval : C → List (Cap α) → Request α → Outcome)
+    (p : Policy α C) (req : Request α) : Decision :=
   let matched := p.rules.any fun r => (matchPattern r.pattern req.path).isSome
   let outs := outcomes eval p req
   let applicable := !outs.isEmpty
@@ -116,7 +117,7 @@ def decide {C : Type} (eval : C → List Cap → Request → Outcome)
     else .deny .conditionsNotMet
 
 /-- Rebuild a path from a pattern and captures (inverse of matching). -/
-def instGo (rest : Bool) : List Seg → List Cap → Option (List String)
+def instGo {α : Type} [DecidableEq α] (rest : Bool) : List (Seg α) → List (Cap α) → Option (List α)
   | [], caps =>
     if rest then (match caps with | [.path r] => some r | _ => none)
     else if caps = [] then some [] else none
@@ -124,7 +125,8 @@ def instGo (rest : Bool) : List Seg → List Cap → Option (List String)
   | .var :: ss, .str x :: cs => (instGo rest ss cs).map (x :: ·)
   | .var :: _, _ => none
 
-def instantiate (p : Pattern) (caps : List Cap) : Option (List String) :=
+def instantiate {α : Type} [DecidableEq α] (p : Pattern α) (caps : List (Cap α)) :
+    Option (List α) :=
   instGo p.rest p.segs caps
 
 end Facl

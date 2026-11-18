@@ -10,7 +10,9 @@
     "Facl.decide_perm",
     "Facl.decide_mono",
     "FaclCore.decide.combine_spec",
-    "FaclCore.decide.combine_allow_iff"
+    "FaclCore.decide.combine_allow_iff",
+    "FaclCore.decide.decide_with_spec",
+    "FaclCore.path.match_pattern_spec"
   ],
   "definition_names": [],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]

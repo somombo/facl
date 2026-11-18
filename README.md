@@ -2,7 +2,7 @@
 
 facl protects an HTTP API with a rules file in the style of Firebase Security Rules. Each `match` block names a URL pattern, and each `allow` statement grants HTTP methods when its condition, written in a small subset of CEL, is true. Any matching allow grants access; if nothing matches, the request is denied, and an erroring condition never grants.
 
-All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4. The grant combiner, which turns rule outcomes into the decision, is already proven against a Lean spec; see [verification/](verification/README.md). `verification/check.sh` checks them end to end: it confirms the Lean code is what Aeneas generates from the Rust, then has `lake comparator` check the proofs in a sandbox. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype.
+All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4. The decision procedure is proven against a Lean spec for any condition evaluator. That covers path matching, method filtering, rule combination and the deny reasons; see [verification/](verification/README.md). The CEL evaluator, the parser and path canonicalization are tested, but not proven yet. `verification/check.sh` checks them end to end: it confirms the Lean code is what Aeneas generates from the Rust, then has `lake comparator` check the proofs in a sandbox. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype.
 
 ## Example
 
