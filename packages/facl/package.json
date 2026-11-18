@@ -2,6 +2,7 @@
   "name": "facl",
   "version": "0.3.0",
   "description": "Firebase-style access-control rules for HTTP APIs, powered by a Rust engine compiled to WebAssembly",
+  "keywords": ["acl", "authorization", "access-control", "firebase-rules", "cel", "hono", "webassembly"],
   "type": "module",
   "license": "Apache-2.0",
   "author": "Chisomo Makombo Sakala",
@@ -18,11 +19,13 @@
   },
   "files": [
     "src",
-    "wasm"
+    "wasm",
+    "NOTICE"
   ],
   "scripts": {
     "build": "cargo build --release --target wasm32-unknown-unknown -p facl-wasm && wasm-bindgen --target web --out-dir wasm ../../target/wasm32-unknown-unknown/release/facl_wasm.wasm",
     "test": "node --test \"test/*.test.js\"",
+    "prepublishOnly": "npm run build && npm test",
     "example": "node examples/server.js"
   },
   "peerDependencies": {

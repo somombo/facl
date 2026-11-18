@@ -2,7 +2,7 @@
 
 facl protects an HTTP API with a rules file in the style of Firebase Security Rules. Each `match` block names a URL pattern, and each `allow` statement grants HTTP methods when its condition, written in a small subset of CEL, is true. Any matching allow grants access; if nothing matches, the request is denied, and an erroring condition never grants.
 
-All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4, so it can be proven a piece at a time. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype; see `.ignore/plans/` for the design.
+All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4. The grant combiner, which turns rule outcomes into the decision, is already proven against a Lean spec; see [verification/](verification/README.md). v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype.
 
 ## Example
 
@@ -85,6 +85,8 @@ app.use("*", facl(policy, { auth: verifyJwt }));
 - **Denials.** The middleware answers 403 `{"error":"forbidden"}` by default. Pass `onDeny(c, decision)` to choose another response, such as 401 when no credentials were sent. The reason belongs in logs, not in client responses. Any internal failure (bad facts, a throwing verifier, a wasm trap) is a denial with the reason `internal_error`.
 - **Footprint skipping.** `policy.footprint` lists what the policy reads (`headers`, `auth`, `context`). `authorize` gathers only those facts, so a policy that never reads `request.auth` never calls your verifier.
 - **Large integers.** JavaScript numbers lose precision beyond 2^53. Pass such values in `context` with `JSON.rawJSON("...")`.
+- **CORS.** Browsers send preflight `OPTIONS` requests without credentials, and `read` includes `OPTIONS`. Answer preflights with CORS middleware registered before facl.
+- **Runtimes.** Node 20 or later, Bun, and Deno with `--allow-read`, which it needs to load the wasm file. Cloudflare Workers is not supported yet.
 
 ## License
 
