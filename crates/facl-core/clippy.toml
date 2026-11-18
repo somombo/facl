@@ -1,0 +1,37 @@
+# Enforces the Aeneas subset described in the design doc. `for` loops and
+# closures cannot be banned here; the CI guardrail greps for them.
+disallowed-types = [
+    { path = "alloc::string::String", reason = "use Vec<u8> for UTF-8 text" },
+    { path = "std::collections::HashMap", reason = "use a Vec of pairs" },
+    { path = "std::collections::HashSet", reason = "use a Vec" },
+    { path = "std::collections::BTreeMap", reason = "use a Vec of pairs" },
+    { path = "std::collections::BTreeSet", reason = "use a Vec" },
+    { path = "alloc::collections::btree_map::BTreeMap", reason = "use a Vec of pairs" },
+    { path = "alloc::collections::btree_set::BTreeSet", reason = "use a Vec" },
+]
+disallowed-methods = [
+    { path = "core::iter::Iterator::map", reason = "use a while loop" },
+    { path = "core::iter::Iterator::filter", reason = "use a while loop" },
+    { path = "core::iter::Iterator::filter_map", reason = "use a while loop" },
+    { path = "core::iter::Iterator::flat_map", reason = "use a while loop" },
+    { path = "core::iter::Iterator::for_each", reason = "use a while loop" },
+    { path = "core::iter::Iterator::fold", reason = "use a while loop" },
+    { path = "core::iter::Iterator::collect", reason = "use a while loop" },
+    { path = "core::iter::Iterator::any", reason = "use a while loop" },
+    { path = "core::iter::Iterator::all", reason = "use a while loop" },
+    { path = "core::iter::Iterator::find", reason = "use a while loop" },
+    { path = "core::iter::Iterator::position", reason = "use a while loop" },
+    { path = "core::iter::Iterator::enumerate", reason = "use a while loop" },
+    { path = "core::iter::Iterator::zip", reason = "use a while loop" },
+    { path = "core::iter::Iterator::rev", reason = "use a while loop" },
+    { path = "core::iter::Iterator::sum", reason = "use a while loop" },
+    { path = "core::iter::Iterator::count", reason = "use a while loop" },
+    { path = "core::iter::Iterator::cloned", reason = "use a while loop" },
+    { path = "core::iter::Iterator::copied", reason = "use a while loop" },
+    { path = "core::option::Option::map", reason = "use match" },
+    { path = "core::option::Option::and_then", reason = "use match" },
+    { path = "core::option::Option::unwrap_or_else", reason = "use match" },
+    { path = "core::result::Result::map", reason = "use match" },
+    { path = "core::result::Result::map_err", reason = "use match" },
+    { path = "core::result::Result::and_then", reason = "use match" },
+]

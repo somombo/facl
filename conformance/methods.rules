@@ -1,0 +1,19 @@
+service http {
+  match /r {
+    allow read: if true;
+  }
+  match /w {
+    allow write: if true;
+  }
+  match /one {
+    allow patch: if true;
+  }
+  // Action names are case-insensitive in the rules file.
+  match /mixed {
+    allow Get, OPTIONS;
+  }
+  match /either {
+    allow get: if false;
+    allow post: if true;
+  }
+}

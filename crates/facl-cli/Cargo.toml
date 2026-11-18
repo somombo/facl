@@ -1,0 +1,16 @@
+[package]
+name = "facl-cli"
+description = "Command-line tool for checking and testing facl policies"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "facl"
+path = "src/main.rs"
+
+[dependencies]
+facl.workspace = true
+serde_json.workspace = true

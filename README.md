@@ -1,104 +1,91 @@
-# FACL
+# facl
 
-This is a firebase rules inspired access control language (DSL) for securing backend REST api's written in node.js. 
+facl protects an HTTP API with a rules file in the style of Firebase Security Rules. Each `match` block names a URL pattern, and each `allow` statement grants HTTP methods when its condition, written in a small subset of CEL, is true. Any matching allow grants access; if nothing matches, the request is denied, and an erroring condition never grants.
 
-It is based on firebase' security rule syntax.
+All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4, so it can be proven a piece at a time. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype; see `.ignore/plans/` for the design.
 
-- See [Cloud Storage Security Rules Ref](https://firebase.google.com/docs/reference/security/storage/) and [Firestore Security Rules Ref](https://firebase.google.com/docs/firestore/security/rules-conditions)
-
-- Also checkout [Google Cel Spec](https://github.com/google/cel-spec), for the expression language's specification.
-
-
-This project aims to provide a similar and consistent syntax as that exemplified at the links above.
-
-## Installation / Running
-
-To install run:
-```
-$ npm install facl
-```
-
-## Usage
- Use as expressjs middleware created from directly from inline source code like:
-```js
- import * as facl from 'facl'
- app.use(facl.fromSource(`
-   service https.cloudfunctions.net {
-     match /path { 
-       allow read: if true;
-     }
-   }
- `));
- // will allow HTTP GETs but not POSTs at '/path'
-```
- 
-
-Alternatively, you can pull in the rules from a local file as in:
-
-```js
- const facl = require('facl') // feel free to use commonjs
- app.use(facl.fromFile('/path/to/example.simple.rules'))
-```
-
- The functions `fromSource` and `fromFile` are only intended to be used for development purposes.
- 
- In production, simply store the rules in memory (as a string) in the `FACL_ACCESS_CONTROL_RULES` environment variable and then:
-
-```ts 
- import facl from 'facl' // Then import default for production. Or do commonjs equivalent 
- app.use(facl()) // Alternatively, you can pass in a custom env. varName e.g `facl('MY_ENV_VAR')`
-```
-
-> Take a look at the file `example.app.js` for a basic example of how to use this lib.
-> To the run example:
-> ```
-> $ node node_modules/facl/example.app.js
-> ```
-
-
-
-## Further Info
-Here is an example of what we are aiming to be able to write with this language. This would be for the purpose of securing or controlling access to REST endpoints in a firebase cloud functions context:
+## Example
 
 ```
-// The `cloud.functions.https` namespace currently doesn't exist but would 
-// allow things like `request.accepts("json")` and `request.body`
-// that are expected in an http validation context (see below for example use)
-service cloud.functions.https {
-  match /app {
+service http {
+  match /users/{userId} {
+    // Signed-in users can read any profile; only the owner can change it.
+    allow read: if request.auth != null;
+    allow write: if request.auth != null && request.auth.uid == userId;
 
-    // Allow all requests to e.g. "/my_apis/my_twitter/endpoints/my_followers_list",
-    // only if user (i.e. requester) is signed in, 
-    // and deny all requests to e.g. "/non_apis/my_twitter/non_endpoints/my_followers_list".
-    // even if user is signed in.
-    match /my_apis/{api}/endpoints {
-      match /{endpoint=**} {
-        allow read, write: if request.auth.uid != null;
-      }
+    // Rules don't cascade, so files need their own allow.
+    match /files/{path=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    allow read: if true; // e.g. Anyone can execute "GET /app"
-
-    match /other_api/{other_endpoint} {
-      
-      // Allow GET requests to e.g. "/other_api/my_youtube",
-      // only if requester's `Content-Type` is "application/json".    
-      // The `allow get` is the same as `allow read`.
-      allow get: if request.accepts("json");  
-          
-      // Allow POST, PUT and DELETE requests to e.g. "/other_api/my_google_plus",
-      // only if requester's has non-empty body.
-      // The "allow post, put, delete" is the same as `allow write`.
-      allow post, put, delete: if request.body != null;  
-    
-    }     
   }
 
-  // all requests to anything that's not explicitly declared with `match` will be denied by default
+  match /public/{path=**} {
+    allow get, head: if true;
+  }
+
+  // The app verifies the Stripe signature against the raw body
+  // and passes the result in as a fact.
+  match /webhooks/stripe {
+    allow post: if context.stripeVerified == true;
+  }
 }
 ```
 
+`read` covers GET, HEAD and OPTIONS; `write` covers POST, PUT, PATCH and DELETE.
 
-Feel free to star / fork  or open an issue if you have any questions!
+## CLI
 
-Related project [XACML](https://en.wikipedia.org/wiki/XACML)
+```
+cargo run -p facl-cli -- check api.rules
+cargo run -p facl-cli -- eval api.rules GET /users/alice --auth '{"uid":"bob"}'
+cargo run -p facl-cli -- test api.rules cases.json
+```
+
+- `facl check FILE` parses and checks a rules file.
+- `facl eval FILE METHOD PATH [--auth JSON] [--header NAME=VALUE]... [--context JSON]` prints one decision as JSON.
+- `facl test FILE CASES.json` runs a JSON array of cases such as `{ "request": "GET /admin", "expect": "deny" }` (optional keys: `name`, `headers`, `auth`, `context`, `reason`).
+
+Exit codes: 0 success, 1 errors or failing cases, 2 usage errors.
+
+## Tests
+
+```
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all --check
+cargo build -p facl-core --target wasm32-unknown-unknown   # rustup target add wasm32-unknown-unknown
+```
+
+The shared conformance cases live in `conformance/` as `NAME.rules` plus `NAME.cases.json` pairs; `crates/facl/tests/conformance.rs` runs every pair.
+
+## JavaScript
+
+The engine ships to JavaScript as WebAssembly in the `facl` npm package (`packages/facl`). It needs Rust with the `wasm32-unknown-unknown` target and `wasm-bindgen-cli` 0.2.130:
+
+```sh
+cd packages/facl
+npm ci
+npm run build   # cargo build for wasm32, then wasm-bindgen into wasm/
+npm test
+```
+
+Check a Fetch `Request` with `authorize`, or protect a Hono app with the middleware:
+
+```js
+import { compile, authorize } from "facl";
+import { facl } from "facl/hono";
+
+const policy = compile(rulesText);               // throws an Error with `diagnostics` on bad rules
+const { allowed, reason } = await authorize(policy, request, { auth: verifyJwt, context });
+
+app.use("*", facl(policy, { auth: verifyJwt }));
+```
+
+- **Path contract.** The adapter passes `new URL(request.url).pathname`, still percent-encoded. The engine decodes each segment once. The path must be the one your router dispatches on. A path with an empty segment (`//`, or a trailing `/` other than the root) is denied as a bad request path, because routers disagree about such paths.
+- **Denials.** The middleware answers 403 `{"error":"forbidden"}` by default. Pass `onDeny(c, decision)` to choose another response, such as 401 when no credentials were sent. The reason belongs in logs, not in client responses. Any internal failure (bad facts, a throwing verifier, a wasm trap) is a denial with the reason `internal_error`.
+- **Footprint skipping.** `policy.footprint` lists what the policy reads (`headers`, `auth`, `context`). `authorize` gathers only those facts, so a policy that never reads `request.auth` never calls your verifier.
+- **Large integers.** JavaScript numbers lose precision beyond 2^53. Pass such values in `context` with `JSON.rawJSON("...")`.
+
+## License
+
+Copyright 2026 Chisomo Makombo Sakala. Licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE). The 0.2.x JavaScript prototype in this repository's history was released under the MIT License.

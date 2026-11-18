@@ -1,0 +1,10 @@
+[package]
+name = "facl-core"
+description = "The facl decision engine: paths, conditions and rule combination (no_std, Aeneas subset)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]

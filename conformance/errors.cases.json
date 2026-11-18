@@ -1,0 +1,18 @@
+[
+  { "name": "error then true, declaration order 1", "request": "GET /error-then-true", "expect": "allow" },
+  { "name": "true then error, declaration order 2", "request": "GET /true-then-error", "expect": "allow" },
+  { "name": "error || true is true", "request": "GET /error-or-true", "expect": "allow" },
+  { "name": "true || error is true", "request": "GET /true-or-error", "expect": "allow" },
+  { "name": "error && false is false", "request": "GET /error-and-false", "expect": "allow" },
+  { "name": "false && error is false", "request": "GET /false-and-error", "expect": "allow" },
+  { "name": "an error alone is denied", "request": "GET /error-alone", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "error && true is an error", "request": "GET /error-and-true", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "error || false is an error", "request": "GET /error-or-false", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "!error is an error", "request": "GET /error-negated", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "non-bool || true is true", "request": "GET /int-or-true", "expect": "allow" },
+  { "name": "a non-boolean condition grants nothing", "request": "GET /int-alone", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "non-bool && false is false", "request": "GET /string-and-false", "expect": "allow" },
+  { "name": "missing key is an error", "request": "GET /missing-key", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "index out of range is an error", "request": "GET /index-out-of-range", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "two errors still deny", "request": "GET /error-then-error", "expect": "deny", "reason": "conditions_not_met" }
+]

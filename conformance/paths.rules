@@ -1,0 +1,29 @@
+service http {
+  match /files/{name} {
+    allow read: if name == "a";
+  }
+  match /uni/{name} {
+    allow read: if name == "é";
+  }
+  match /v1.0/items-x~y/{id} {
+    allow read: if id == "1";
+  }
+  match /orgs/{org}/members/{member} {
+    allow read: if org == "acme" && member == "bob";
+  }
+  match /deep/{path=**} {
+    allow read: if size(path) == 2 && path[0] == "a" && path[1] == "b.txt";
+  }
+  match /zero/{path=**} {
+    allow read: if size(path) == 0;
+  }
+  match /users/{id} {
+    allow read: if true;
+    match /posts/{postId} {
+      allow write: if true;
+    }
+  }
+  match / {
+    allow get: if true;
+  }
+}

@@ -1,0 +1,12 @@
+[
+  { "name": "verified webhook", "request": "POST /webhooks/stripe", "context": { "stripeVerified": true }, "expect": "allow" },
+  { "name": "unverified webhook", "request": "POST /webhooks/stripe", "context": { "stripeVerified": false }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "no context at all", "request": "POST /webhooks/stripe", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "empty context", "request": "POST /webhooks/stripe", "context": {}, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "a string is not true", "request": "POST /webhooks/stripe", "context": { "stripeVerified": "true" }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "an int is not true", "request": "POST /webhooks/stripe", "context": { "stripeVerified": 1 }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "wrong method", "request": "GET /webhooks/stripe", "context": { "stripeVerified": true }, "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "has() guards a missing key", "request": "POST /webhooks/github", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "has() then compare", "request": "POST /webhooks/github", "context": { "sig": "ok" }, "expect": "allow" },
+  { "name": "has() then a wrong value", "request": "POST /webhooks/github", "context": { "sig": "bad" }, "expect": "deny", "reason": "conditions_not_met" }
+]

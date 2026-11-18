@@ -1,0 +1,18 @@
+[package]
+name = "facl-wasm"
+description = "WebAssembly bindings for facl"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+facl.workspace = true
+serde_json.workspace = true
+wasm-bindgen = "=0.2.130"
+js-sys = "0.3"

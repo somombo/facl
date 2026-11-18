@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/facl-core",
+    "crates/facl-syntax",
+    "crates/facl-check",
+    "crates/facl",
+    "crates/facl-cli",
+    "crates/facl-wasm",
+]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+license = "Apache-2.0"
+authors = ["Chisomo Makombo Sakala"]
+repository = "https://github.com/somombo/facl"
+
+[workspace.dependencies]
+facl-core = { path = "crates/facl-core", version = "0.3.0" }
+facl-syntax = { path = "crates/facl-syntax", version = "0.3.0" }
+facl-check = { path = "crates/facl-check", version = "0.3.0" }
+facl = { path = "crates/facl", version = "0.3.0" }
+serde_json = "1"
+
+[profile.release]
+panic = "abort"

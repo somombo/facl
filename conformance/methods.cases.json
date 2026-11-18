@@ -1,0 +1,23 @@
+[
+  { "request": "GET /r", "expect": "allow" },
+  { "name": "read covers HEAD", "request": "HEAD /r", "expect": "allow" },
+  { "name": "read covers OPTIONS", "request": "OPTIONS /r", "expect": "allow" },
+  { "name": "read does not cover POST", "request": "POST /r", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "TRACE is never granted", "request": "TRACE /r", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "CONNECT is never granted", "request": "CONNECT /r", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "a lowercase method is not a method", "request": "get /r", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "an unknown method on an unknown path", "request": "TRACE /nowhere", "expect": "deny", "reason": "no_matching_rule" },
+  { "request": "POST /w", "expect": "allow" },
+  { "request": "PUT /w", "expect": "allow" },
+  { "request": "PATCH /w", "expect": "allow" },
+  { "request": "DELETE /w", "expect": "allow" },
+  { "name": "write does not cover GET", "request": "GET /w", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "write does not cover HEAD", "request": "HEAD /w", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "a single method", "request": "PATCH /one", "expect": "allow" },
+  { "name": "other methods are not granted", "request": "PUT /one", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "mixed-case action names, no condition", "request": "GET /mixed", "expect": "allow" },
+  { "request": "OPTIONS /mixed", "expect": "allow" },
+  { "request": "HEAD /mixed", "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "only the allow that lists the method is applicable", "request": "POST /either", "expect": "allow" },
+  { "name": "a false condition for the method", "request": "GET /either", "expect": "deny", "reason": "conditions_not_met" }
+]

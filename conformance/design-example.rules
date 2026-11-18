@@ -1,0 +1,22 @@
+service http {
+  match /users/{userId} {
+    // Signed-in users can read any profile; only the owner can change it.
+    allow read: if request.auth != null;
+    allow write: if request.auth != null && request.auth.uid == userId;
+
+    // Rules don't cascade, so files need their own allow.
+    match /files/{path=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+
+  match /public/{path=**} {
+    allow get, head: if true;
+  }
+
+  // The app verifies the Stripe signature against the raw body
+  // and passes the result in as a fact.
+  match /webhooks/stripe {
+    allow post: if context.stripeVerified == true;
+  }
+}

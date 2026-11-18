@@ -1,0 +1,43 @@
+{
+  "name": "facl",
+  "version": "0.3.0",
+  "description": "Firebase-style access-control rules for HTTP APIs, powered by a Rust engine compiled to WebAssembly",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Chisomo Makombo Sakala",
+  "repository": "https://github.com/somombo/facl",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./hono": {
+      "types": "./src/hono.d.ts",
+      "default": "./src/hono.js"
+    }
+  },
+  "files": [
+    "src",
+    "wasm"
+  ],
+  "scripts": {
+    "build": "cargo build --release --target wasm32-unknown-unknown -p facl-wasm && wasm-bindgen --target web --out-dir wasm ../../target/wasm32-unknown-unknown/release/facl_wasm.wasm",
+    "test": "node --test \"test/*.test.js\"",
+    "example": "node examples/server.js"
+  },
+  "peerDependencies": {
+    "hono": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "hono": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@hono/node-server": "^1.13.0",
+    "hono": "^4.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

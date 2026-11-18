@@ -1,0 +1,53 @@
+service http {
+  match /size-string { allow read: if size(context.s) == 3; }
+  match /size-method { allow read: if context.s.size() == 3; }
+  match /size-list   { allow read: if size(context.l) == 2; }
+  match /size-map    { allow read: if size(context.m) == 2; }
+  match /size-int    { allow read: if size(context.n) == 1; }
+
+  match /starts { allow read: if context.s.startsWith("ab"); }
+  match /ends   { allow read: if context.s.endsWith("yz"); }
+  match /starts-int { allow read: if context.n.startsWith("1"); }
+  match /starts-path { allow read: if request.path.startsWith("/starts-path"); }
+
+  match /has { allow read: if has(context.flag); }
+  match /has-null { allow read: if has(request.auth.uid); }
+
+  match /in-list { allow read: if request.auth.uid in ["a", "b"]; }
+  match /in-map  { allow read: if "k" in context.m; }
+  match /in-map-int { allow read: if 1 in context.m; }
+  match /in-int { allow read: if "k" in context.n; }
+
+  match /is-json { allow read: if request.is("json"); }
+  match /is-wild { allow read: if request.is("application/*"); }
+  match /is-exact { allow read: if request.is("text/csv"); }
+  match /is-bogus { allow read: if request.is("bogus"); }
+  match /is-int { allow read: if request.is(1); }
+
+  match /cmp-int { allow read: if context.n > 5 && context.n <= 10 && context.n != 7; }
+  match /cmp-neg { allow read: if context.n < 0 && context.n >= -3; }
+  match /cmp-min { allow read: if -9223372036854775808 < context.n; }
+  match /cmp-str { allow read: if context.s >= "m" && context.s < "z"; }
+  match /cmp-bool { allow read: if false < context.b; }
+  match /eq-types { allow read: if context.n == "1"; }
+  match /neq-types { allow read: if context.n != "1"; }
+  match /eq-null { allow read: if context.x == null; }
+  match /eq-list { allow read: if context.l == ["x", "y"]; }
+  match /map-eq { allow read: if context.a == context.b; }
+
+  match /mismatch-cmp { allow read: if context.n < "x"; }
+  match /mismatch-not { allow read: if !context.n; }
+  match /mismatch-str { allow read: if context.s; }
+  match /mismatch-null { allow read: if context.x < 1; }
+  match /mismatch-and { allow read: if context.n && true; }
+
+  match /index-list { allow read: if context.l[1] == "y"; }
+  match /index-key  { allow read: if context.m["k"] == 1; }
+  match /index-type { allow read: if context.l["a"] == 1; }
+  match /index-var  { allow read: if context.l[context.i] == "y"; }
+
+  match /fields/x { allow read: if request.method == "GET" && request.path == "/fields/x"; }
+  match /header { allow read: if request.headers["x-token"] == "abc"; }
+  match /select { allow read: if request.auth.token.admin == true; }
+  match /parens { allow read: if (context.n == 1 || context.n == 2) && !(context.n == 2); }
+}

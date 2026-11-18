@@ -71,3 +71,9 @@ typings/
 /dist
 /tmp
 /out-tsc
+
+# Rust
+/target
+
+# Generated wasm build (see packages/facl)
+/packages/facl/wasm/

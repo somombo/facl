@@ -1,0 +1,16 @@
+[
+  { "name": "anonymous cannot read a profile", "request": "GET /users/alice", "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "any signed-in user can read", "request": "GET /users/alice", "auth": { "uid": "bob" }, "expect": "allow" },
+  { "name": "only the owner can write", "request": "PUT /users/alice", "auth": { "uid": "bob" }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "owner can write", "request": "PUT /users/alice", "auth": { "uid": "alice" }, "expect": "allow" },
+  { "name": "owner can write files", "request": "PUT /users/alice/files/cv.pdf", "auth": { "uid": "alice" }, "expect": "allow" },
+  { "name": "rest matches zero segments", "request": "GET /users/alice/files", "auth": { "uid": "alice" }, "expect": "allow" },
+  { "name": "bob cannot read alice's files", "request": "GET /users/alice/files/cv.pdf", "auth": { "uid": "bob" }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "public files are readable", "request": "GET /public/logo.png", "expect": "allow" },
+  { "name": "head is allowed on public files", "request": "HEAD /public/a/b/c.txt", "expect": "allow" },
+  { "name": "only get and head on public", "request": "DELETE /public/logo.png", "auth": { "uid": "alice" }, "expect": "deny", "reason": "no_allow_for_method" },
+  { "name": "verified webhook", "request": "POST /webhooks/stripe", "context": { "stripeVerified": true }, "expect": "allow" },
+  { "name": "unverified webhook", "request": "POST /webhooks/stripe", "context": { "stripeVerified": false }, "expect": "deny", "reason": "conditions_not_met" },
+  { "name": "nothing matches /admin", "request": "GET /admin", "expect": "deny", "reason": "no_matching_rule" },
+  { "name": "the root matches nothing", "request": "GET /", "expect": "deny", "reason": "no_matching_rule" }
+]

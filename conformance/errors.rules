@@ -1,0 +1,57 @@
+// An erroring condition fails only its own allow. Request.auth is null in
+// these cases, so request.auth.uid is an error (null has no fields).
+service http {
+  match /error-then-true {
+    allow read: if request.auth.uid == "x";
+    allow read: if true;
+  }
+  match /true-then-error {
+    allow read: if true;
+    allow read: if request.auth.uid == "x";
+  }
+  match /error-or-true {
+    allow read: if request.auth.uid == "x" || true;
+  }
+  match /true-or-error {
+    allow read: if true || request.auth.uid == "x";
+  }
+  // The negation is true only if the && really was false, not an error.
+  match /error-and-false {
+    allow read: if !(request.auth.uid == "x" && false);
+  }
+  match /false-and-error {
+    allow read: if !(false && request.auth.uid == "x");
+  }
+  match /error-alone {
+    allow read: if request.auth.uid == "x";
+  }
+  match /error-and-true {
+    allow read: if request.auth.uid == "x" && true;
+  }
+  match /error-or-false {
+    allow read: if request.auth.uid == "x" || false;
+  }
+  match /error-negated {
+    allow read: if !(request.auth.uid == "x");
+  }
+  // A non-boolean operand counts as an error.
+  match /int-or-true {
+    allow read: if 1 || true;
+  }
+  match /int-alone {
+    allow read: if 1;
+  }
+  match /string-and-false {
+    allow read: if !("s" && false);
+  }
+  match /missing-key {
+    allow read: if context.missing == 1;
+  }
+  match /index-out-of-range {
+    allow read: if [1, 2][5] == 1;
+  }
+  match /error-then-error {
+    allow read: if context.missing == 1;
+    allow read: if [1][3] == 1;
+  }
+}
