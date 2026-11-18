@@ -42,6 +42,16 @@ theorem decide_mono (p q : Policy α C) (req : Request α)
     Facl.decide eval q req = .allow := by
   sorry
 
+theorem utf8Valid_iff (bytes : List UInt8) :
+    utf8Valid bytes = true ↔ bytes.toByteArray.IsValidUTF8 := by
+  sorry
+
+theorem canonicalize_segment {raw : List UInt8} {segs : List (List UInt8)}
+    (h : canonicalize raw = .ok segs) : ∀ s ∈ segs,
+      s ≠ [] ∧ s ≠ utf8 "." ∧ s ≠ utf8 ".." ∧ '/'.toUInt8 ∉ s ∧ 0 ∉ s ∧
+        s.toByteArray.IsValidUTF8 := by
+  sorry
+
 end Facl
 
 open Aeneas Aeneas.Std Aeneas.Std.Result
@@ -69,6 +79,10 @@ theorem decide_with_spec {C E : Type} (inst : Conditions E C) (p : ir.Policy C) 
       decisionToSpec d = Facl.decide eval (ir.policyToSpec p) (requestToSpec method segments) ⦄ := by
   sorry
 
+theorem method_bit_spec (bytes : Slice U8) :
+    method_bit bytes ⦃ bit => bit.val = Facl.methodBit (bytesToSpec bytes) ⦄ := by
+  sorry
+
 end FaclCore.decide
 
 namespace FaclCore.path
@@ -78,6 +92,10 @@ theorem match_pattern_spec (p : ir.Pattern) (segments : Slice (alloc.vec.Vec U8)
     match_pattern p segments ⦃ caps =>
       caps.map (fun v => v.val.map captureToSpec) =
         Facl.matchPattern (ir.patternToSpec p) (segmentsToSpec segments) ⦄ := by
+  sorry
+
+theorem canonicalize_spec (raw : Slice U8) :
+    canonicalize raw ⦃ r => canonicalToSpec r = Facl.canonicalize (bytesToSpec raw) ⦄ := by
   sorry
 
 end FaclCore.path

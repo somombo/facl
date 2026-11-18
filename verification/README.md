@@ -1,9 +1,11 @@
 # facl verification
 
-This Lean 4 project specifies how facl matches paths and combines rules. It also proves that three functions extracted from the Rust implement that spec:
+This Lean 4 project specifies how facl reads a request path, matches it and combines rules. It also proves that five functions extracted from the Rust implement that spec:
 
-- the grant combiner, `combine`
+- path canonicalization, `canonicalize`
+- the method bit, `method_bit`
 - path matching, `match_pattern`
+- the grant combiner, `combine`
 - the decision procedure, `decide_with`
 
 ## What is specified
@@ -13,8 +15,10 @@ This Lean 4 project specifies how facl matches paths and combines rules. It also
 | `Seg`, `Pattern`, `matchPattern` | `Seg`, `Pattern`, `match_pattern` |
 | `Outcome`, `Verdict`, `combine` | `Outcome`, `Verdict`, `combine` |
 | `DenyReason`, `Decision`, `decide` | `DenyReason`, `Decision`, `decide_with` |
+| `methodBit` | `method_bit` |
+| `PathError`, `canonicalize` and its helpers | `PathError`, `canonicalize` and its helpers |
 
-Conditions are abstract: `decide` takes `eval : Cond → List (Cap α) → Request α → Outcome`. The spec is generic in the path segment type `α`. The refinement proofs use bytes (`List U8`), as the Rust does, and the examples use `String`.
+Conditions are abstract: `decide` takes `eval : Cond → List (Cap α) → Request α → Outcome`. The spec is generic in the path segment type `α`. The refinement proofs use bytes (`List U8`), as the Rust does, and the examples use `String`. The path spec works on Lean's `UInt8` bytes, and its UTF-8 check is Table 3-7 of the Unicode Standard.
 
 Differences from the Rust:
 
@@ -23,6 +27,11 @@ Differences from the Rust:
 - `request` and `context` are folded into `eval`.
 
 Theorems (`Facl/Theorems.lean`): `combine_eq_allow_iff`, `decide_eq_allow_iff`, `default_deny`, `decide_perm` (rule order is irrelevant), `decide_mono` (adding rules never revokes access), `match_length_of_not_rest`, `match_instantiate` (instantiating a pattern with its captures rebuilds the path). `Facl/Examples.lean` has `#guard` checks mirroring the conformance cases.
+
+Theorems about paths ([Facl/PathTheorems.lean](Facl/PathTheorems.lean)):
+
+- `utf8Valid_iff`: the Table 3-7 check accepts exactly the bytes Lean's `ByteArray.IsValidUTF8` accepts, the definition behind Lean's `String`.
+- `canonicalize_segment`: every segment `canonicalize` returns is non-empty, is not `.` or `..`, contains no `/` or NUL byte, and is valid UTF-8.
 
 ## Refinement proofs
 
@@ -36,6 +45,8 @@ spec.
 | `combine_allow_iff` | [Facl/Refinement.lean](Facl/Refinement.lean) | `combine` allows exactly when some outcome is `Granted` |
 | `match_pattern_spec` | [Facl/RefinementPath.lean](Facl/RefinementPath.lean) | `match_pattern`'s captures are `Facl.matchPattern`'s |
 | `decide_with_spec` | [Facl/RefinementDecide.lean](Facl/RefinementDecide.lean) | `decide_with`'s decision is `Facl.decide`'s |
+| `canonicalize_spec` | [Facl/RefinementRequest.lean](Facl/RefinementRequest.lean) | `canonicalize`'s segments, or its error, are `Facl.canonicalize`'s |
+| `method_bit_spec` | [Facl/RefinementRequest.lean](Facl/RefinementRequest.lean) | `method_bit`'s bit is `Facl.methodBit`'s |
 
 `decide_with_spec` covers matching, method filtering, combining and the deny
 reasons. It holds for any condition evaluator that never fails and agrees with
@@ -49,6 +60,12 @@ With it, the spec theorems carry over to the Rust: default deny, rule order not
 mattering, and adding rules never revoking access. The Rust `decide` is
 `decide_with` with the CEL evaluator plugged in, and that evaluator is not
 proven yet.
+
+`canonicalize_spec` needs no assumptions. With `canonicalize_segment`, it shows
+that the Rust never hands the decision a segment that is empty, a dot segment,
+or contains `/`, NUL or invalid UTF-8. The code that feeds the canonical path
+and method bit into `decide`, `Policy::evaluate` in the `facl` crate, is tested
+but outside the extraction.
 
 The maps from the generated Rust types to the spec's types live in
 [Facl/Lift.lean](Facl/Lift.lean), and `Challenge.lean` uses them too.
@@ -74,7 +91,8 @@ script. [Aeneas installation instructions](https://github.com/AeneasVerif/aeneas
 CHARON=/path/to/charon AENEAS=/path/to/aeneas verification/extract.sh
 ```
 
-Charon starts at `crate::decide::combine`, `crate::path::match_pattern` and
+Charon starts at `crate::path::canonicalize`, `crate::decide::method_bit`,
+`crate::path::match_pattern`, `crate::decide::combine` and
 `crate::decide::decide_with`, and follows their dependencies. The rest of
 `facl-core` is outside this extraction. That includes the CEL evaluator, which
 `decide_with` reaches only through its `Conditions` trait. Whole-crate
@@ -86,6 +104,9 @@ At this Aeneas revision, writing extractable Rust has some pitfalls:
   extracts to Lean's `¬`, and the generated code does not typecheck. A mutation
   test found this. `!` in an `if` condition is fine.
 - **No `Vec::clone` model.** `match_pattern` copies bytes with a loop instead.
+- **No byte-string literals or slice patterns.** Aeneas rejects `b"GET"` as a
+  constant, and fails on `match name { [b'G', b'E', b'T'] => … }`. `method_bit`
+  and `is_dot_segment` check the length and compare bytes one at a time.
 - **A parameter named `path`.** It shadows the generated `path` namespace, so
   the Rust parameters are called `segments`.
 - **An `if let` that drops an owned value inside a loop.** Aeneas fails with
@@ -112,7 +133,7 @@ lake exe cache get
 lake build --wfail
 ```
 
-The build requires all eleven theorems named in `comparator.json`, and checks that
+The build requires all fifteen theorems named in `comparator.json`, and checks that
 their transitive axioms are drawn from `propext`, `Classical.choice` and
 `Quot.sound`. The `aeneas` CI job runs `check.sh --paranoid`, described next.
 
@@ -121,7 +142,7 @@ their transitive axioms are drawn from `propext`, `Classical.choice` and
 `lake comparator` judges the proofs without trusting this project's build. In a
 sandbox, it builds and exports two modules:
 
-- the challenge, [Challenge.lean](Challenge.lean), which states the eleven theorems,
+- the challenge, [Challenge.lean](Challenge.lean), which states the fifteen theorems,
   each proved with `sorry`
 - the solution, the `Facl` module, which proves them
 
@@ -184,9 +205,9 @@ Without Charon and Aeneas, `verification/check.sh --no-extract` skips step 1.
 `lake exe cache get` and `lake build` from `verification/`, then
 `lake comparator` with or without `--paranoid`.
 
-Each run exports only the eleven theorems and what they depend on, about 5,100
+Each run exports only the fifteen theorems and what they depend on, about 8,200
 declarations, not the whole Mathlib environment. With the build already done,
-`verification/check.sh --paranoid` took about three minutes when measured on
+`verification/check.sh --paranoid` took about five minutes when measured on
 2026-11-18.
 
 `lake comparator` exits with one of three codes:

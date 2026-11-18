@@ -1,6 +1,6 @@
 # facl
 
-Firebase-style access-control rules for HTTP APIs. A small Rust engine, compiled to WebAssembly, decides every request. Path matching and rule combination are proven against a Lean 4 spec, for any condition evaluator.
+Firebase-style access-control rules for HTTP APIs. A small Rust engine, compiled to WebAssembly, decides every request. Path canonicalization, path matching and rule combination are proven against a Lean 4 spec, for any condition evaluator.
 
 > v0.3 is a prototype. The rules language and the API may change.
 

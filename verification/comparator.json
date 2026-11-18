@@ -12,8 +12,16 @@
     "FaclCore.decide.combine_spec",
     "FaclCore.decide.combine_allow_iff",
     "FaclCore.decide.decide_with_spec",
-    "FaclCore.path.match_pattern_spec"
+    "FaclCore.path.match_pattern_spec",
+    "Facl.utf8Valid_iff",
+    "Facl.canonicalize_segment",
+    "FaclCore.decide.method_bit_spec",
+    "FaclCore.path.canonicalize_spec"
   ],
   "definition_names": [],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"]
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ]
 }

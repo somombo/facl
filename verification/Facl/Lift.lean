@@ -54,4 +54,23 @@ def ir.ruleToSpec {C : Type} (r : ir.Rule C) : Facl.Rule (List U8) C :=
 def ir.policyToSpec {C : Type} (p : ir.Policy C) : Facl.Policy (List U8) C :=
   ⟨p.rules.val.map ir.ruleToSpec⟩
 
+def byteToSpec (b : U8) : UInt8 := UInt8.ofNat b.val
+
+def bytesToSpec (s : Slice U8) : List UInt8 := s.val.map byteToSpec
+
+def path.pathErrorToSpec : path.PathError → Facl.PathError
+  | .NoLeadingSlash => .noLeadingSlash
+  | .QueryOrFragment => .queryOrFragment
+  | .EmptySegment => .emptySegment
+  | .BadPercentEncoding => .badPercentEncoding
+  | .DotSegment => .dotSegment
+  | .ForbiddenByte => .forbiddenByte
+  | .InvalidUtf8 => .invalidUtf8
+
+def path.canonicalToSpec :
+    core.result.Result (alloc.vec.Vec (alloc.vec.Vec U8)) path.PathError →
+      Except Facl.PathError (List (List UInt8))
+  | .Ok segs => .ok (segs.val.map (·.val.map byteToSpec))
+  | .Err e => .error (pathErrorToSpec e)
+
 end FaclCore
