@@ -19,7 +19,8 @@ llbc="$work_dir/facl_core.llbc"
 (
   cd "$verification_dir/../crates/facl-core"
   CARGO_TARGET_DIR="$work_dir/target" "${charon[@]}" cargo --preset=aeneas --sysroot=default \
-    --start-from=crate::decide::combine \
+    --start-from=crate::decide::combine --start-from=crate::decide::method_bit \
+    --start-from=crate::path::canonicalize \
     --start-from=crate::path::match_pattern --start-from=crate::decide::decide_with --dest-file="$llbc" -- --locked
 )
 

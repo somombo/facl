@@ -52,6 +52,213 @@ def decide.combine
   then ok decide.Verdict.Allow
   else ok decide.Verdict.Deny
 
+/-- [facl_core::decide::method_bit]:
+    Source: 'crates/facl-core/src/decide.rs', lines 84:0-130:1
+    Visibility: public -/
+def decide.method_bit («name» : Slice Std.U8) : Result Std.U8 := do
+  let i := Slice.len «name»
+  if i = 3#usize
+  then
+    let i1 ← Slice.index_usize «name» 0#usize
+    if i1 = 71#u8
+    then
+      let i2 ← Slice.index_usize «name» 1#usize
+      if i2 = 69#u8
+      then
+        let i3 ← Slice.index_usize «name» 2#usize
+        if i3 = 84#u8
+        then ok 1#u8
+        else
+          if i1 = 80#u8
+          then
+            if i2 = 85#u8
+            then if i3 = 84#u8
+                 then ok 16#u8
+                 else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+      else
+        if i1 = 80#u8
+        then
+          if i2 = 85#u8
+          then
+            let i3 ← Slice.index_usize «name» 2#usize
+            if i3 = 84#u8
+            then ok 16#u8
+            else ok 0#u8
+          else ok 0#u8
+        else ok 0#u8
+    else
+      if i1 = 80#u8
+      then
+        let i2 ← Slice.index_usize «name» 1#usize
+        if i2 = 85#u8
+        then
+          let i3 ← Slice.index_usize «name» 2#usize
+          if i3 = 84#u8
+          then ok 16#u8
+          else ok 0#u8
+        else ok 0#u8
+      else ok 0#u8
+  else
+    let i1 := Slice.len «name»
+    if i1 = 4#usize
+    then
+      let i2 ← Slice.index_usize «name» 0#usize
+      if i2 = 72#u8
+      then
+        let i3 ← Slice.index_usize «name» 1#usize
+        if i3 = 69#u8
+        then
+          let i4 ← Slice.index_usize «name» 2#usize
+          if i4 = 65#u8
+          then
+            let i5 ← Slice.index_usize «name» 3#usize
+            if i5 = 68#u8
+            then ok 2#u8
+            else
+              if i2 = 80#u8
+              then
+                if i3 = 79#u8
+                then
+                  if i4 = 83#u8
+                  then if i5 = 84#u8
+                       then ok 8#u8
+                       else ok 0#u8
+                  else ok 0#u8
+                else ok 0#u8
+              else ok 0#u8
+          else
+            if i2 = 80#u8
+            then
+              if i3 = 79#u8
+              then
+                if i4 = 83#u8
+                then
+                  let i5 ← Slice.index_usize «name» 3#usize
+                  if i5 = 84#u8
+                  then ok 8#u8
+                  else ok 0#u8
+                else ok 0#u8
+              else ok 0#u8
+            else ok 0#u8
+        else
+          if i2 = 80#u8
+          then
+            if i3 = 79#u8
+            then
+              let i4 ← Slice.index_usize «name» 2#usize
+              if i4 = 83#u8
+              then
+                let i5 ← Slice.index_usize «name» 3#usize
+                if i5 = 84#u8
+                then ok 8#u8
+                else ok 0#u8
+              else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+      else
+        if i2 = 80#u8
+        then
+          let i3 ← Slice.index_usize «name» 1#usize
+          if i3 = 79#u8
+          then
+            let i4 ← Slice.index_usize «name» 2#usize
+            if i4 = 83#u8
+            then
+              let i5 ← Slice.index_usize «name» 3#usize
+              if i5 = 84#u8
+              then ok 8#u8
+              else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+        else ok 0#u8
+    else
+      let i2 := Slice.len «name»
+      if i2 = 5#usize
+      then
+        let i3 ← Slice.index_usize «name» 0#usize
+        if i3 = 80#u8
+        then
+          let i4 ← Slice.index_usize «name» 1#usize
+          if i4 = 65#u8
+          then
+            let i5 ← Slice.index_usize «name» 2#usize
+            if i5 = 84#u8
+            then
+              let i6 ← Slice.index_usize «name» 3#usize
+              if i6 = 67#u8
+              then
+                let i7 ← Slice.index_usize «name» 4#usize
+                if i7 = 72#u8
+                then ok 32#u8
+                else ok 0#u8
+              else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+        else ok 0#u8
+      else
+        let i3 := Slice.len «name»
+        if i3 = 6#usize
+        then
+          let i4 ← Slice.index_usize «name» 0#usize
+          if i4 = 68#u8
+          then
+            let i5 ← Slice.index_usize «name» 1#usize
+            if i5 = 69#u8
+            then
+              let i6 ← Slice.index_usize «name» 2#usize
+              if i6 = 76#u8
+              then
+                let i7 ← Slice.index_usize «name» 3#usize
+                if i7 = 69#u8
+                then
+                  let i8 ← Slice.index_usize «name» 4#usize
+                  if i8 = 84#u8
+                  then
+                    let i9 ← Slice.index_usize «name» 5#usize
+                    if i9 = 69#u8
+                    then ok 64#u8
+                    else ok 0#u8
+                  else ok 0#u8
+                else ok 0#u8
+              else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+        else
+          let i4 := Slice.len «name»
+          if i4 = 7#usize
+          then
+            let i5 ← Slice.index_usize «name» 0#usize
+            if i5 = 79#u8
+            then
+              let i6 ← Slice.index_usize «name» 1#usize
+              if i6 = 80#u8
+              then
+                let i7 ← Slice.index_usize «name» 2#usize
+                if i7 = 84#u8
+                then
+                  let i8 ← Slice.index_usize «name» 3#usize
+                  if i8 = 73#u8
+                  then
+                    let i9 ← Slice.index_usize «name» 4#usize
+                    if i9 = 79#u8
+                    then
+                      let i10 ← Slice.index_usize «name» 5#usize
+                      if i10 = 78#u8
+                      then
+                        let i11 ← Slice.index_usize «name» 6#usize
+                        if i11 = 83#u8
+                        then ok 4#u8
+                        else ok 0#u8
+                      else ok 0#u8
+                    else ok 0#u8
+                  else ok 0#u8
+                else ok 0#u8
+              else ok 0#u8
+            else ok 0#u8
+          else ok 0#u8
+
 /-- [facl_core::value::bytes_eq]: loop 0:
     Source: 'crates/facl-core/src/value.rs', lines 47:4-54:1
     Visibility: public -/
@@ -81,7 +288,7 @@ def value.bytes_eq (a : Slice Std.U8) (b : Slice Std.U8) : Result Bool := do
   else value.bytes_eq_loop a b 0#usize
 
 /-- [facl_core::path::copy_bytes]: loop 0:
-    Source: 'crates/facl-core/src/path.rs', lines 194:4-197:5 -/
+    Source: 'crates/facl-core/src/path.rs', lines 204:4-207:5 -/
 @[rust_loop]
 def path.copy_bytes_loop
   (s : Slice Std.U8) (out : alloc.vec.Vec Std.U8) (i : Std.Usize) :
@@ -98,13 +305,13 @@ def path.copy_bytes_loop
 partial_fixpoint
 
 /-- [facl_core::path::copy_bytes]:
-    Source: 'crates/facl-core/src/path.rs', lines 191:0-199:1 -/
+    Source: 'crates/facl-core/src/path.rs', lines 201:0-209:1 -/
 @[reducible]
 def path.copy_bytes (s : Slice Std.U8) : Result (alloc.vec.Vec Std.U8) := do
   path.copy_bytes_loop s (alloc.vec.Vec.new Std.U8) 0#usize
 
 /-- [facl_core::path::match_pattern]: loop 1:
-    Source: 'crates/facl-core/src/path.rs', lines 232:8-235:9
+    Source: 'crates/facl-core/src/path.rs', lines 242:8-245:9
     Visibility: public -/
 @[rust_loop]
 def path.match_pattern_loop0_loop0
@@ -125,7 +332,7 @@ def path.match_pattern_loop0_loop0
 partial_fixpoint
 
 /-- [facl_core::path::match_pattern]: loop 0:
-    Source: 'crates/facl-core/src/path.rs', lines 218:4-239:1
+    Source: 'crates/facl-core/src/path.rs', lines 228:4-249:1
     Visibility: public -/
 @[rust_loop]
 def path.match_pattern_loop0
@@ -170,7 +377,7 @@ def path.match_pattern_loop0
 partial_fixpoint
 
 /-- [facl_core::path::match_pattern]:
-    Source: 'crates/facl-core/src/path.rs', lines 207:0-239:1
+    Source: 'crates/facl-core/src/path.rs', lines 217:0-249:1
     Visibility: public -/
 def path.match_pattern
   (p : ir.Pattern) (segments : Slice (alloc.vec.Vec Std.U8)) :
@@ -193,7 +400,7 @@ def path.match_pattern
       path.Capture) 0#usize
 
 /-- [facl_core::decide::apply_rule]: loop 0:
-    Source: 'crates/facl-core/src/decide.rs', lines 124:4-131:5 -/
+    Source: 'crates/facl-core/src/decide.rs', lines 152:4-159:5 -/
 @[rust_loop]
 def decide.apply_rule_loop
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
@@ -225,7 +432,7 @@ def decide.apply_rule_loop
 partial_fixpoint
 
 /-- [facl_core::decide::apply_rule]:
-    Source: 'crates/facl-core/src/decide.rs', lines 112:0-133:1 -/
+    Source: 'crates/facl-core/src/decide.rs', lines 140:0-161:1 -/
 def decide.apply_rule
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
   (rule : ir.Rule C) (method : Std.U8)
@@ -243,7 +450,7 @@ def decide.apply_rule
     ok (outcomes1, true, applicable)
 
 /-- [facl_core::decide::decide_with]: loop 0:
-    Source: 'crates/facl-core/src/decide.rs', lines 150:4-161:5
+    Source: 'crates/facl-core/src/decide.rs', lines 178:4-189:5
     Visibility: public -/
 @[rust_loop]
 def decide.decide_with_loop
@@ -274,7 +481,7 @@ def decide.decide_with_loop
 partial_fixpoint
 
 /-- [facl_core::decide::decide_with]:
-    Source: 'crates/facl-core/src/decide.rs', lines 140:0-176:1
+    Source: 'crates/facl-core/src/decide.rs', lines 168:0-204:1
     Visibility: public -/
 def decide.decide_with
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
@@ -296,5 +503,568 @@ def decide.decide_with
       then ok (decide.Decision.Deny decide.DenyReason.ConditionsNotMet)
       else ok (decide.Decision.Deny decide.DenyReason.NoAllowForMethod)
     else ok (decide.Decision.Deny decide.DenyReason.NoMatchingRule)
+
+/-- [facl_core::path::tail_ok]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 182:4-189:1 -/
+@[rust_loop]
+def path.tail_ok_loop
+  (s : Slice Std.U8) (i : Std.Usize) (tail : Std.Usize) (k : Std.Usize) :
+  Result Std.Usize
+  := do
+  if k <= tail
+  then
+    let i1 ← i + k
+    let i2 ← Slice.index_usize s i1
+    let i3 ← lift (i2 &&& 192#u8)
+    if i3 != 128#u8
+    then ok 0#usize
+    else let k1 ← k + 1#usize
+         path.tail_ok_loop s i tail k1
+  else tail + 1#usize
+partial_fixpoint
+
+/-- [facl_core::path::tail_ok]:
+    Source: 'crates/facl-core/src/path.rs', lines 174:0-189:1 -/
+def path.tail_ok
+  (s : Slice Std.U8) (i : Std.Usize) (tail : Std.Usize) (lo : Std.U8)
+  (hi : Std.U8) :
+  Result Std.Usize
+  := do
+  let i1 := Slice.len s
+  let i2 ← i1 - i
+  if i2 <= tail
+  then ok 0#usize
+  else
+    let i3 ← i + 1#usize
+    let i4 ← Slice.index_usize s i3
+    if i4 < lo
+    then ok 0#usize
+    else
+      let i5 ← Slice.index_usize s i3
+      if i5 > hi
+      then ok 0#usize
+      else path.tail_ok_loop s i tail 2#usize
+
+/-- [facl_core::path::utf8_char_len]:
+    Source: 'crates/facl-core/src/path.rs', lines 157:0-169:1 -/
+def path.utf8_char_len
+  (s : Slice Std.U8) (i : Std.Usize) : Result Std.Usize := do
+  let i1 ← Slice.index_usize s i
+  if 0#u8 <= i1
+  then
+    if i1 <= 127#u8
+    then ok 1#usize
+    else
+      if 194#u8 <= i1
+      then
+        if i1 <= 223#u8
+        then path.tail_ok s i 1#usize 128#u8 191#u8
+        else
+          match i1 with
+          | 224#uscalar => path.tail_ok s i 2#usize 160#u8 191#u8
+          | 237#uscalar => path.tail_ok s i 2#usize 128#u8 159#u8
+          | 240#uscalar => path.tail_ok s i 3#usize 144#u8 191#u8
+          | 244#uscalar => path.tail_ok s i 3#usize 128#u8 143#u8
+          | _ =>
+            if 225#u8 <= i1
+            then
+              if i1 <= 236#u8
+              then path.tail_ok s i 2#usize 128#u8 191#u8
+              else
+                if 238#u8 <= i1
+                then
+                  if i1 <= 239#u8
+                  then path.tail_ok s i 2#usize 128#u8 191#u8
+                  else
+                    if 241#u8 <= i1
+                    then
+                      if i1 <= 243#u8
+                      then path.tail_ok s i 3#usize 128#u8 191#u8
+                      else ok 0#usize
+                    else ok 0#usize
+                else
+                  if 241#u8 <= i1
+                  then
+                    if i1 <= 243#u8
+                    then path.tail_ok s i 3#usize 128#u8 191#u8
+                    else ok 0#usize
+                  else ok 0#usize
+            else
+              if 238#u8 <= i1
+              then
+                if i1 <= 239#u8
+                then path.tail_ok s i 2#usize 128#u8 191#u8
+                else
+                  if 241#u8 <= i1
+                  then
+                    if i1 <= 243#u8
+                    then path.tail_ok s i 3#usize 128#u8 191#u8
+                    else ok 0#usize
+                  else ok 0#usize
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+      else
+        match i1 with
+        | 224#uscalar => path.tail_ok s i 2#usize 160#u8 191#u8
+        | 237#uscalar => path.tail_ok s i 2#usize 128#u8 159#u8
+        | 240#uscalar => path.tail_ok s i 3#usize 144#u8 191#u8
+        | 244#uscalar => path.tail_ok s i 3#usize 128#u8 143#u8
+        | _ =>
+          if 225#u8 <= i1
+          then
+            if i1 <= 236#u8
+            then path.tail_ok s i 2#usize 128#u8 191#u8
+            else
+              if 238#u8 <= i1
+              then
+                if i1 <= 239#u8
+                then path.tail_ok s i 2#usize 128#u8 191#u8
+                else
+                  if 241#u8 <= i1
+                  then
+                    if i1 <= 243#u8
+                    then path.tail_ok s i 3#usize 128#u8 191#u8
+                    else ok 0#usize
+                  else ok 0#usize
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+          else
+            if 238#u8 <= i1
+            then
+              if i1 <= 239#u8
+              then path.tail_ok s i 2#usize 128#u8 191#u8
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+            else
+              if 241#u8 <= i1
+              then
+                if i1 <= 243#u8
+                then path.tail_ok s i 3#usize 128#u8 191#u8
+                else ok 0#usize
+              else ok 0#usize
+  else
+    if 194#u8 <= i1
+    then
+      if i1 <= 223#u8
+      then path.tail_ok s i 1#usize 128#u8 191#u8
+      else
+        match i1 with
+        | 224#uscalar => path.tail_ok s i 2#usize 160#u8 191#u8
+        | 237#uscalar => path.tail_ok s i 2#usize 128#u8 159#u8
+        | 240#uscalar => path.tail_ok s i 3#usize 144#u8 191#u8
+        | 244#uscalar => path.tail_ok s i 3#usize 128#u8 143#u8
+        | _ =>
+          if 225#u8 <= i1
+          then
+            if i1 <= 236#u8
+            then path.tail_ok s i 2#usize 128#u8 191#u8
+            else
+              if 238#u8 <= i1
+              then
+                if i1 <= 239#u8
+                then path.tail_ok s i 2#usize 128#u8 191#u8
+                else
+                  if 241#u8 <= i1
+                  then
+                    if i1 <= 243#u8
+                    then path.tail_ok s i 3#usize 128#u8 191#u8
+                    else ok 0#usize
+                  else ok 0#usize
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+          else
+            if 238#u8 <= i1
+            then
+              if i1 <= 239#u8
+              then path.tail_ok s i 2#usize 128#u8 191#u8
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+            else
+              if 241#u8 <= i1
+              then
+                if i1 <= 243#u8
+                then path.tail_ok s i 3#usize 128#u8 191#u8
+                else ok 0#usize
+              else ok 0#usize
+    else
+      match i1 with
+      | 224#uscalar => path.tail_ok s i 2#usize 160#u8 191#u8
+      | 237#uscalar => path.tail_ok s i 2#usize 128#u8 159#u8
+      | 240#uscalar => path.tail_ok s i 3#usize 144#u8 191#u8
+      | 244#uscalar => path.tail_ok s i 3#usize 128#u8 143#u8
+      | _ =>
+        if 225#u8 <= i1
+        then
+          if i1 <= 236#u8
+          then path.tail_ok s i 2#usize 128#u8 191#u8
+          else
+            if 238#u8 <= i1
+            then
+              if i1 <= 239#u8
+              then path.tail_ok s i 2#usize 128#u8 191#u8
+              else
+                if 241#u8 <= i1
+                then
+                  if i1 <= 243#u8
+                  then path.tail_ok s i 3#usize 128#u8 191#u8
+                  else ok 0#usize
+                else ok 0#usize
+            else
+              if 241#u8 <= i1
+              then
+                if i1 <= 243#u8
+                then path.tail_ok s i 3#usize 128#u8 191#u8
+                else ok 0#usize
+              else ok 0#usize
+        else
+          if 238#u8 <= i1
+          then
+            if i1 <= 239#u8
+            then path.tail_ok s i 2#usize 128#u8 191#u8
+            else
+              if 241#u8 <= i1
+              then
+                if i1 <= 243#u8
+                then path.tail_ok s i 3#usize 128#u8 191#u8
+                else ok 0#usize
+              else ok 0#usize
+          else
+            if 241#u8 <= i1
+            then
+              if i1 <= 243#u8
+              then path.tail_ok s i 3#usize 128#u8 191#u8
+              else ok 0#usize
+            else ok 0#usize
+
+/-- [facl_core::path::utf8_valid]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 145:4-153:1 -/
+@[rust_loop]
+def path.utf8_valid_loop (s : Slice Std.U8) (i : Std.Usize) : Result Bool := do
+  let i1 := Slice.len s
+  if i < i1
+  then
+    let n ← path.utf8_char_len s i
+    if n = 0#usize
+    then ok false
+    else let i2 ← i + n
+         path.utf8_valid_loop s i2
+  else ok true
+partial_fixpoint
+
+/-- [facl_core::path::utf8_valid]:
+    Source: 'crates/facl-core/src/path.rs', lines 143:0-153:1 -/
+@[reducible]
+def path.utf8_valid (s : Slice Std.U8) : Result Bool := do
+  path.utf8_valid_loop s 0#usize
+
+/-- [facl_core::path::is_dot_segment]:
+    Source: 'crates/facl-core/src/path.rs', lines 113:0-121:1 -/
+def path.is_dot_segment (seg : Slice Std.U8) : Result Bool := do
+  let i := Slice.len seg
+  if i = 1#usize
+  then let i1 ← Slice.index_usize seg 0#usize
+       ok (i1 = 46#u8)
+  else
+    let i1 := Slice.len seg
+    if i1 = 2#usize
+    then
+      let i2 ← Slice.index_usize seg 0#usize
+      if i2 = 46#u8
+      then let i3 ← Slice.index_usize seg 1#usize
+           ok (i3 = 46#u8)
+      else ok false
+    else ok false
+
+/-- [facl_core::path::validate_segment]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 128:4-139:1 -/
+@[rust_loop]
+def path.validate_segment_loop
+  (seg : Slice Std.U8) (i : Std.Usize) :
+  Result (core.result.Result Unit path.PathError)
+  := do
+  let i1 := Slice.len seg
+  if i < i1
+  then
+    let i2 ← Slice.index_usize seg i
+    if i2 = 47#u8
+    then ok (core.result.Result.Err path.PathError.ForbiddenByte)
+    else
+      if i2 = 0#u8
+      then ok (core.result.Result.Err path.PathError.ForbiddenByte)
+      else let i3 ← i + 1#usize
+           path.validate_segment_loop seg i3
+  else
+    let b ← path.utf8_valid seg
+    if b
+    then ok (core.result.Result.Ok ())
+    else ok (core.result.Result.Err path.PathError.InvalidUtf8)
+partial_fixpoint
+
+/-- [facl_core::path::validate_segment]:
+    Source: 'crates/facl-core/src/path.rs', lines 123:0-139:1 -/
+def path.validate_segment
+  (seg : Slice Std.U8) : Result (core.result.Result Unit path.PathError) := do
+  let b ← path.is_dot_segment seg
+  if b
+  then ok (core.result.Result.Err path.PathError.DotSegment)
+  else path.validate_segment_loop seg 0#usize
+
+/-- [facl_core::path::hex_value]:
+    Source: 'crates/facl-core/src/path.rs', lines 104:0-111:1 -/
+def path.hex_value (b : Std.U8) : Result (Option Std.U8) := do
+  if 48#u8 <= b
+  then
+    if b <= 57#u8
+    then let i ← b - 48#u8
+         ok (some i)
+    else
+      if 97#u8 <= b
+      then
+        if b <= 102#u8
+        then let i ← b - 97#u8
+             let i1 ← i + 10#u8
+             ok (some i1)
+        else
+          if 65#u8 <= b
+          then
+            if b <= 70#u8
+            then let i ← b - 65#u8
+                 let i1 ← i + 10#u8
+                 ok (some i1)
+            else ok none
+          else ok none
+      else
+        if 65#u8 <= b
+        then
+          if b <= 70#u8
+          then let i ← b - 65#u8
+               let i1 ← i + 10#u8
+               ok (some i1)
+          else ok none
+        else ok none
+  else
+    if 97#u8 <= b
+    then
+      if b <= 102#u8
+      then let i ← b - 97#u8
+           let i1 ← i + 10#u8
+           ok (some i1)
+      else
+        if 65#u8 <= b
+        then
+          if b <= 70#u8
+          then let i ← b - 65#u8
+               let i1 ← i + 10#u8
+               ok (some i1)
+          else ok none
+        else ok none
+    else
+      if 65#u8 <= b
+      then
+        if b <= 70#u8
+        then let i ← b - 65#u8
+             let i1 ← i + 10#u8
+             ok (some i1)
+        else ok none
+      else ok none
+
+/-- [facl_core::path::decode_segment]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 85:4-102:1 -/
+@[rust_loop]
+def path.decode_segment_loop
+  (seg : Slice Std.U8) (out : alloc.vec.Vec Std.U8) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec Std.U8) path.PathError)
+  := do
+  let i1 := Slice.len seg
+  if i < i1
+  then
+    let i2 ← Slice.index_usize seg i
+    if i2 = 37#u8
+    then
+      let i3 := Slice.len seg
+      let i4 ← i3 - i
+      if i4 < 3#usize
+      then ok (core.result.Result.Err path.PathError.BadPercentEncoding)
+      else
+        let i5 ← i + 1#usize
+        let i6 ← Slice.index_usize seg i5
+        let o ← path.hex_value i6
+        let i7 ← i + 2#usize
+        let i8 ← Slice.index_usize seg i7
+        let o1 ← path.hex_value i8
+        match o with
+        | none => ok (core.result.Result.Err path.PathError.BadPercentEncoding)
+        | some hi =>
+          match o1 with
+          | none =>
+            ok (core.result.Result.Err path.PathError.BadPercentEncoding)
+          | some lo =>
+            let i9 ← hi * 16#u8
+            let i10 ← i9 + lo
+            let out1 ← alloc.vec.Vec.push out i10
+            let i11 ← i + 3#usize
+            path.decode_segment_loop seg out1 i11
+    else
+      let out1 ← alloc.vec.Vec.push out i2
+      let i3 ← i + 1#usize
+      path.decode_segment_loop seg out1 i3
+  else
+    let s := alloc.vec.Vec.deref out
+    let r ← path.validate_segment s
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue _ =>
+      ok (core.result.Result.Ok out)
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec Std.U8) (core.convert.FromSame path.PathError) residual
+partial_fixpoint
+
+/-- [facl_core::path::decode_segment]:
+    Source: 'crates/facl-core/src/path.rs', lines 82:0-102:1 -/
+@[reducible]
+def path.decode_segment
+  (seg : Slice Std.U8) :
+  Result (core.result.Result (alloc.vec.Vec Std.U8) path.PathError)
+  := do
+  path.decode_segment_loop seg (alloc.vec.Vec.new Std.U8) 0#usize
+
+/-- [facl_core::path::split_raw]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 56:4-79:1 -/
+@[rust_loop]
+def path.split_raw_loop
+  (raw : Slice Std.U8) (segments : alloc.vec.Vec (alloc.vec.Vec Std.U8))
+  (current : alloc.vec.Vec Std.U8) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+    path.PathError)
+  := do
+  let i1 := Slice.len raw
+  if i < i1
+  then
+    let b ← Slice.index_usize raw i
+    if b = 63#u8
+    then ok (core.result.Result.Err path.PathError.QueryOrFragment)
+    else
+      if b = 35#u8
+      then ok (core.result.Result.Err path.PathError.QueryOrFragment)
+      else
+        if b = 47#u8
+        then
+          let b1 ← alloc.vec.Vec.is_empty current
+          if b1
+          then ok (core.result.Result.Err path.PathError.EmptySegment)
+          else
+            let segments1 ← alloc.vec.Vec.push segments current
+            let i2 ← i + 1#usize
+            path.split_raw_loop raw segments1 (alloc.vec.Vec.new Std.U8) i2
+        else
+          let current1 ← alloc.vec.Vec.push current b
+          let i2 ← i + 1#usize
+          path.split_raw_loop raw segments current1 i2
+  else
+    let b ← alloc.vec.Vec.is_empty current
+    if b
+    then
+      let i2 := Slice.len raw
+      if i2 > 1#usize
+      then ok (core.result.Result.Err path.PathError.EmptySegment)
+      else ok (core.result.Result.Ok segments)
+    else
+      let segments1 ← alloc.vec.Vec.push segments current
+      ok (core.result.Result.Ok segments1)
+partial_fixpoint
+
+/-- [facl_core::path::split_raw]:
+    Source: 'crates/facl-core/src/path.rs', lines 49:0-79:1 -/
+def path.split_raw
+  (raw : Slice Std.U8) :
+  Result (core.result.Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+    path.PathError)
+  := do
+  let b ← core.slice.Slice.is_empty raw
+  if b
+  then ok (core.result.Result.Err path.PathError.NoLeadingSlash)
+  else
+    let i ← Slice.index_usize raw 0#usize
+    if i != 47#u8
+    then ok (core.result.Result.Err path.PathError.NoLeadingSlash)
+    else
+      path.split_raw_loop raw (alloc.vec.Vec.new (alloc.vec.Vec Std.U8))
+        (alloc.vec.Vec.new Std.U8) 1#usize
+
+/-- [facl_core::path::canonicalize]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 41:4-46:1
+    Visibility: public -/
+@[rust_loop]
+def path.canonicalize_loop
+  (encoded : alloc.vec.Vec (alloc.vec.Vec Std.U8))
+  (out : alloc.vec.Vec (alloc.vec.Vec Std.U8)) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+    path.PathError)
+  := do
+  let i1 := alloc.vec.Vec.len encoded
+  if i < i1
+  then
+    let v ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice (alloc.vec.Vec
+        Std.U8)) encoded i
+    let s := alloc.vec.Vec.deref v
+    let r ← path.decode_segment s
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let out1 ← alloc.vec.Vec.push out val
+      let i2 ← i + 1#usize
+      path.canonicalize_loop encoded out1 i2
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec (alloc.vec.Vec Std.U8)) (core.convert.FromSame
+        path.PathError) residual
+  else ok (core.result.Result.Ok out)
+partial_fixpoint
+
+/-- [facl_core::path::canonicalize]:
+    Source: 'crates/facl-core/src/path.rs', lines 37:0-46:1
+    Visibility: public -/
+def path.canonicalize
+  (raw : Slice Std.U8) :
+  Result (core.result.Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+    path.PathError)
+  := do
+  let r ← path.split_raw raw
+  let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+  match cf with
+  | core.ops.control_flow.ControlFlow.Continue val =>
+    path.canonicalize_loop val (alloc.vec.Vec.new (alloc.vec.Vec Std.U8))
+      0#usize
+  | core.ops.control_flow.ControlFlow.Break residual =>
+    core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+      (alloc.vec.Vec (alloc.vec.Vec Std.U8)) (core.convert.FromSame
+      path.PathError) residual
 
 end FaclCore

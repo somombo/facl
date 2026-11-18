@@ -3,7 +3,7 @@
 use crate::eval::{Env, Host, eval};
 use crate::ir::{CExpr, Policy, Rule};
 use crate::path::{Capture, match_pattern};
-use crate::value::{Value, bytes_eq};
+use crate::value::Value;
 use alloc::vec::Vec;
 
 /// What one applicable condition contributed.
@@ -82,23 +82,51 @@ pub struct Request {
 /// POST=8, PUT=16, PATCH=32, DELETE=64. Anything else is 0, which no allow
 /// grants.
 pub fn method_bit(name: &[u8]) -> u8 {
-    if bytes_eq(name, b"GET") {
-        1
-    } else if bytes_eq(name, b"HEAD") {
-        2
-    } else if bytes_eq(name, b"OPTIONS") {
-        4
-    } else if bytes_eq(name, b"POST") {
-        8
-    } else if bytes_eq(name, b"PUT") {
-        16
-    } else if bytes_eq(name, b"PATCH") {
-        32
-    } else if bytes_eq(name, b"DELETE") {
-        64
-    } else {
-        0
+    if name.len() == 3 {
+        if name[0] == b'G' && name[1] == b'E' && name[2] == b'T' {
+            return 1;
+        }
+        if name[0] == b'P' && name[1] == b'U' && name[2] == b'T' {
+            return 16;
+        }
+    } else if name.len() == 4 {
+        if name[0] == b'H' && name[1] == b'E' && name[2] == b'A' && name[3] == b'D' {
+            return 2;
+        }
+        if name[0] == b'P' && name[1] == b'O' && name[2] == b'S' && name[3] == b'T' {
+            return 8;
+        }
+    } else if name.len() == 5 {
+        if name[0] == b'P'
+            && name[1] == b'A'
+            && name[2] == b'T'
+            && name[3] == b'C'
+            && name[4] == b'H'
+        {
+            return 32;
+        }
+    } else if name.len() == 6 {
+        if name[0] == b'D'
+            && name[1] == b'E'
+            && name[2] == b'L'
+            && name[3] == b'E'
+            && name[4] == b'T'
+            && name[5] == b'E'
+        {
+            return 64;
+        }
+    } else if name.len() == 7
+        && name[0] == b'O'
+        && name[1] == b'P'
+        && name[2] == b'T'
+        && name[3] == b'I'
+        && name[4] == b'O'
+        && name[5] == b'N'
+        && name[6] == b'S'
+    {
+        return 4;
     }
+    0
 }
 
 /// Evaluates the condition of one applicable allow.

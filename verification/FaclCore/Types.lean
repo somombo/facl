@@ -55,7 +55,7 @@ inductive decide.Decision where
 | Deny : decide.DenyReason → decide.Decision
 
 /-- [facl_core::path::Capture]
-    Source: 'crates/facl-core/src/path.rs', lines 183:0-188:1
+    Source: 'crates/facl-core/src/path.rs', lines 193:0-198:1
     Visibility: public -/
 @[discriminant isize]
 inductive path.Capture where
@@ -63,7 +63,7 @@ inductive path.Capture where
 | Rest : alloc.vec.Vec (alloc.vec.Vec Std.U8) → path.Capture
 
 /-- Trait declaration: [facl_core::decide::Conditions]
-    Source: 'crates/facl-core/src/decide.rs', lines 105:0-108:1
+    Source: 'crates/facl-core/src/decide.rs', lines 133:0-136:1
     Visibility: public -/
 structure decide.Conditions (Self : Type _) (C : Type _) where
   outcome : Self → C → Slice path.Capture → Result decide.Outcome
@@ -102,5 +102,18 @@ structure ir.Rule (C : Type _) where
     Visibility: public -/
 structure ir.Policy (C : Type _) where
   rules : alloc.vec.Vec (ir.Rule C)
+
+/-- [facl_core::path::PathError]
+    Source: 'crates/facl-core/src/path.rs', lines 13:0-29:1
+    Visibility: public -/
+@[discriminant isize]
+inductive path.PathError where
+| NoLeadingSlash : path.PathError
+| QueryOrFragment : path.PathError
+| EmptySegment : path.PathError
+| BadPercentEncoding : path.PathError
+| DotSegment : path.PathError
+| ForbiddenByte : path.PathError
+| InvalidUtf8 : path.PathError
 
 end FaclCore

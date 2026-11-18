@@ -110,8 +110,18 @@ fn hex_value(b: u8) -> Option<u8> {
     }
 }
 
+fn is_dot_segment(seg: &[u8]) -> bool {
+    if seg.len() == 1 {
+        seg[0] == b'.'
+    } else if seg.len() == 2 {
+        seg[0] == b'.' && seg[1] == b'.'
+    } else {
+        false
+    }
+}
+
 fn validate_segment(seg: &[u8]) -> Result<(), PathError> {
-    if bytes_eq(seg, b".") || bytes_eq(seg, b"..") {
+    if is_dot_segment(seg) {
         return Err(PathError::DotSegment);
     }
     let mut i = 0;
