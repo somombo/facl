@@ -2,7 +2,7 @@
  * Hono middleware for facl.
  */
 
-import { authorize } from "./index.js";
+import { authorize } from "./core.js";
 
 /**
  * Creates middleware that checks every request against `policy` before the

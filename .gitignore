@@ -80,3 +80,6 @@ typings/
 
 # Generated wasm build (see packages/facl)
 /packages/facl/wasm/
+
+# Wrangler's local state from the Workers test
+.wrangler/

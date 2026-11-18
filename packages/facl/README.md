@@ -50,7 +50,10 @@ const { allowed, reason } = await authorize(policy, request, {
 - **Footprint.** `policy.footprint` lists what the policy reads: `headers`, `auth` and `context`. `authorize` gathers only those, so a policy that never reads `request.auth` never calls your verifier.
 - **CORS.** Browsers send preflight `OPTIONS` requests without credentials, and `read` includes `OPTIONS`. Answer preflights with CORS middleware registered before facl.
 - **Large integers.** JavaScript numbers lose precision beyond 2^53. Pass such values in `context` with `JSON.rawJSON("...")`.
-- **Runtimes.** Node 20 or later, Bun, and Deno with `--allow-read`, which it needs to load the wasm file. Cloudflare Workers is not supported yet.
+- **Runtimes.**
+  - Node 20 or later, and Bun.
+  - Deno, with `--allow-read` so it can load the wasm file.
+  - Cloudflare Workers. Wrangler resolves the package's `workerd` export, which imports the wasm as a module, so no configuration is needed.
 
 ## Building from source
 
