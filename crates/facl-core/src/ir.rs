@@ -10,18 +10,18 @@ use alloc::vec::Vec;
 
 /// A compiled policy.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Policy {
+pub struct Policy<C = CExpr> {
     /// One rule per `match` that has allows, in source pre-order.
-    pub rules: Vec<Rule>,
+    pub rules: Vec<Rule<C>>,
 }
 
 /// The allows that share one full path pattern.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Rule {
+pub struct Rule<C = CExpr> {
     /// The full pattern: the parent's segments followed by the child's.
     pub pattern: Pattern,
     /// The allow statements of this match.
-    pub allows: Vec<CompiledAllow>,
+    pub allows: Vec<CompiledAllow<C>>,
 }
 
 /// A path pattern.
@@ -45,11 +45,11 @@ pub enum Seg {
 
 /// An allow statement with its condition lowered.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct CompiledAllow {
+pub struct CompiledAllow<C = CExpr> {
     /// The granted methods as a bit set.
     pub methods: u8,
     /// The condition; a missing condition lowers to `Lit(Bool(true))`.
-    pub cond: CExpr,
+    pub cond: C,
 }
 
 /// A lowered expression. Names are resolved: captures are slots, and calls

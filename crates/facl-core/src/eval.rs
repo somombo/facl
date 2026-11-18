@@ -12,13 +12,13 @@ use core::cmp::Ordering;
 
 /// What a condition can see: the captures, `request` and `context`.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Env {
+pub struct Env<'a> {
     /// The captured path values, numbered as in the pattern.
     pub slots: Vec<Value>,
     /// The `request` value.
-    pub request: Value,
+    pub request: &'a Value,
     /// The `context` value.
-    pub context: Value,
+    pub context: &'a Value,
 }
 
 /// Functions the engine cannot implement itself.
@@ -29,7 +29,7 @@ pub trait Host {
 }
 
 /// Evaluates an expression.
-pub fn eval<H: Host>(e: &CExpr, env: &Env, host: &H) -> Result<Value, EvalError> {
+pub fn eval<H: Host>(e: &CExpr, env: &Env<'_>, host: &H) -> Result<Value, EvalError> {
     match e {
         CExpr::Lit(v) => Ok(v.clone()),
         CExpr::Slot(i) => eval_slot(env, *i),
@@ -53,7 +53,7 @@ pub fn eval<H: Host>(e: &CExpr, env: &Env, host: &H) -> Result<Value, EvalError>
             Ok(Value::Bool(ends_with(&x, &y)))
         }
         CExpr::RequestIs(a) => match eval(a, env, host)? {
-            Value::Str(media) => Ok(Value::Bool(host.request_is(&env.request, &media)?)),
+            Value::Str(media) => Ok(Value::Bool(host.request_is(env.request, &media)?)),
             _ => Err(EvalError::TypeMismatch),
         },
         CExpr::Not(a) => Ok(Value::Bool(!as_bool(eval(a, env, host))?)),
@@ -72,7 +72,7 @@ pub fn eval<H: Host>(e: &CExpr, env: &Env, host: &H) -> Result<Value, EvalError>
     }
 }
 
-fn eval_slot(env: &Env, i: u32) -> Result<Value, EvalError> {
+fn eval_slot(env: &Env<'_>, i: u32) -> Result<Value, EvalError> {
     let i = i as usize;
     if i < env.slots.len() {
         Ok(env.slots[i].clone())
@@ -82,7 +82,7 @@ fn eval_slot(env: &Env, i: u32) -> Result<Value, EvalError> {
     }
 }
 
-fn eval_list<H: Host>(items: &[CExpr], env: &Env, host: &H) -> Result<Value, EvalError> {
+fn eval_list<H: Host>(items: &[CExpr], env: &Env<'_>, host: &H) -> Result<Value, EvalError> {
     let mut out = Vec::new();
     let mut i = 0;
     while i < items.len() {
@@ -101,7 +101,7 @@ fn as_bool(r: Result<Value, EvalError>) -> Result<bool, EvalError> {
     }
 }
 
-fn eval_and<H: Host>(a: &CExpr, b: &CExpr, env: &Env, host: &H) -> Result<Value, EvalError> {
+fn eval_and<H: Host>(a: &CExpr, b: &CExpr, env: &Env<'_>, host: &H) -> Result<Value, EvalError> {
     match as_bool(eval(a, env, host)) {
         Ok(false) => Ok(Value::Bool(false)),
         Ok(true) => Ok(Value::Bool(as_bool(eval(b, env, host))?)),
@@ -112,7 +112,7 @@ fn eval_and<H: Host>(a: &CExpr, b: &CExpr, env: &Env, host: &H) -> Result<Value,
     }
 }
 
-fn eval_or<H: Host>(a: &CExpr, b: &CExpr, env: &Env, host: &H) -> Result<Value, EvalError> {
+fn eval_or<H: Host>(a: &CExpr, b: &CExpr, env: &Env<'_>, host: &H) -> Result<Value, EvalError> {
     match as_bool(eval(a, env, host)) {
         Ok(true) => Ok(Value::Bool(true)),
         Ok(false) => Ok(Value::Bool(as_bool(eval(b, env, host))?)),
@@ -182,7 +182,7 @@ fn code_points(s: &[u8]) -> usize {
 fn two_strings<H: Host>(
     a: &CExpr,
     b: &CExpr,
-    env: &Env,
+    env: &Env<'_>,
     host: &H,
 ) -> Result<(Vec<u8>, Vec<u8>), EvalError> {
     let x = eval(a, env, host)?;

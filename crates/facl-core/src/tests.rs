@@ -131,6 +131,10 @@ mod canonicalize_tests {
 mod match_pattern_tests {
     use super::*;
 
+    fn one(s: &str) -> Capture {
+        Capture::One(bytes(s))
+    }
+
     fn pat(parts: &[Option<&str>], rest: bool) -> Pattern {
         Pattern {
             segs: parts
@@ -157,7 +161,7 @@ mod match_pattern_tests {
     fn vars_capture_in_order() {
         let p = pat(&[Some("u"), None, Some("p"), None], false);
         let caps = match_pattern(&p, &segs(&["u", "x", "p", "y"]));
-        assert_eq!(caps, Some(vec![st("x"), st("y")]));
+        assert_eq!(caps, Some(vec![one("x"), one("y")]));
     }
 
     #[test]
@@ -172,7 +176,7 @@ mod match_pattern_tests {
         let p = pat(&[Some("f")], true);
         assert_eq!(
             match_pattern(&p, &segs(&["f"])),
-            Some(vec![Value::List(vec![])])
+            Some(vec![Capture::Rest(vec![])])
         );
     }
 
@@ -180,8 +184,8 @@ mod match_pattern_tests {
     fn rest_binds_a_list_after_the_vars() {
         let p = pat(&[Some("f"), None], true);
         let caps = match_pattern(&p, &segs(&["f", "u", "a", "b.txt"]));
-        let tail = Value::List(vec![st("a"), st("b.txt")]);
-        assert_eq!(caps, Some(vec![st("u"), tail]));
+        let tail = Capture::Rest(segs(&["a", "b.txt"]));
+        assert_eq!(caps, Some(vec![one("u"), tail]));
     }
 
     #[test]
@@ -196,10 +200,10 @@ mod match_pattern_tests {
         let p = pat(&[], true);
         assert_eq!(
             match_pattern(&p, &segs(&[])),
-            Some(vec![Value::List(vec![])])
+            Some(vec![Capture::Rest(vec![])])
         );
         let caps = match_pattern(&p, &segs(&["a"]));
-        assert_eq!(caps, Some(vec![Value::List(vec![st("a")])]));
+        assert_eq!(caps, Some(vec![Capture::Rest(segs(&["a"]))]));
     }
 }
 
@@ -263,20 +267,22 @@ mod eval_tests {
         }
     }
 
-    fn env() -> Env {
-        Env {
+    fn with_env<T>(f: impl FnOnce(&Env) -> T) -> T {
+        let request = map(&[
+            ("method", st("GET")),
+            ("auth", map(&[("uid", st("u1"))])),
+            ("none", Value::Null),
+        ]);
+        let context = map(&[("n", Value::Int(7)), ("t", Value::Bool(true))]);
+        f(&Env {
             slots: vec![st("slot0"), Value::List(vec![st("a"), st("b")])],
-            request: map(&[
-                ("method", st("GET")),
-                ("auth", map(&[("uid", st("u1"))])),
-                ("none", Value::Null),
-            ]),
-            context: map(&[("n", Value::Int(7)), ("t", Value::Bool(true))]),
-        }
+            request: &request,
+            context: &context,
+        })
     }
 
     fn run(e: &CExpr) -> Result<Value, EvalError> {
-        eval(e, &env(), &TestHost(Ok(true)))
+        with_env(|env| eval(e, env, &TestHost(Ok(true))))
     }
 
     fn lit(v: Value) -> CExpr {
@@ -477,22 +483,25 @@ mod eval_tests {
         let yes = TestHost(Ok(true));
         let no = TestHost(Ok(false));
         assert_eq!(
-            eval(&is(string("json")), &env(), &yes),
+            with_env(|env| eval(&is(string("json")), env, &yes)),
             Ok(Value::Bool(true))
         );
         assert_eq!(
-            eval(&is(string("json")), &env(), &no),
+            with_env(|env| eval(&is(string("json")), env, &no)),
             Ok(Value::Bool(false))
         );
         assert_eq!(
-            eval(&is(string("boom")), &env(), &yes),
+            with_env(|env| eval(&is(string("boom")), env, &yes)),
             Err(EvalError::Host)
         );
         assert_eq!(
-            eval(&is(int(1)), &env(), &yes),
+            with_env(|env| eval(&is(int(1)), env, &yes)),
             Err(EvalError::TypeMismatch)
         );
-        assert_eq!(eval(&is(error()), &env(), &yes), Err(EvalError::NoSuchKey));
+        assert_eq!(
+            with_env(|env| eval(&is(error()), env, &yes)),
+            Err(EvalError::NoSuchKey)
+        );
     }
 
     #[test]

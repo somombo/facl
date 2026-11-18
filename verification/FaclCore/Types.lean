@@ -36,4 +36,71 @@ inductive decide.Verdict where
 | Allow : decide.Verdict
 | Deny : decide.Verdict
 
+/-- [facl_core::decide::DenyReason]
+    Source: 'crates/facl-core/src/decide.rs', lines 48:0-57:1
+    Visibility: public -/
+@[discriminant isize]
+inductive decide.DenyReason where
+| NoMatchingRule : decide.DenyReason
+| NoAllowForMethod : decide.DenyReason
+| ConditionsNotMet : decide.DenyReason
+| BadRequestPath : decide.DenyReason
+
+/-- [facl_core::decide::Decision]
+    Source: 'crates/facl-core/src/decide.rs', lines 61:0-66:1
+    Visibility: public -/
+@[discriminant isize]
+inductive decide.Decision where
+| Allow : decide.Decision
+| Deny : decide.DenyReason → decide.Decision
+
+/-- [facl_core::path::Capture]
+    Source: 'crates/facl-core/src/path.rs', lines 183:0-188:1
+    Visibility: public -/
+@[discriminant isize]
+inductive path.Capture where
+| One : alloc.vec.Vec Std.U8 → path.Capture
+| Rest : alloc.vec.Vec (alloc.vec.Vec Std.U8) → path.Capture
+
+/-- Trait declaration: [facl_core::decide::Conditions]
+    Source: 'crates/facl-core/src/decide.rs', lines 105:0-108:1
+    Visibility: public -/
+structure decide.Conditions (Self : Type _) (C : Type _) where
+  outcome : Self → C → Slice path.Capture → Result decide.Outcome
+
+/-- [facl_core::ir::Seg]
+    Source: 'crates/facl-core/src/ir.rs', lines 39:0-44:1
+    Visibility: public -/
+@[discriminant isize]
+inductive ir.Seg where
+| Lit : alloc.vec.Vec Std.U8 → ir.Seg
+| Var : ir.Seg
+
+/-- [facl_core::ir::Pattern]
+    Source: 'crates/facl-core/src/ir.rs', lines 29:0-34:1
+    Visibility: public -/
+structure ir.Pattern where
+  segs : alloc.vec.Vec ir.Seg
+  rest : Bool
+
+/-- [facl_core::ir::CompiledAllow]
+    Source: 'crates/facl-core/src/ir.rs', lines 48:0-53:1
+    Visibility: public -/
+structure ir.CompiledAllow (C : Type _) where
+  methods : Std.U8
+  cond : C
+
+/-- [facl_core::ir::Rule]
+    Source: 'crates/facl-core/src/ir.rs', lines 20:0-25:1
+    Visibility: public -/
+structure ir.Rule (C : Type _) where
+  pattern : ir.Pattern
+  allows : alloc.vec.Vec (ir.CompiledAllow C)
+
+/-- [facl_core::ir::Policy]
+    Source: 'crates/facl-core/src/ir.rs', lines 13:0-16:1
+    Visibility: public -/
+structure ir.Policy (C : Type _) where
+  rules : alloc.vec.Vec (ir.Rule C)
+
 end FaclCore

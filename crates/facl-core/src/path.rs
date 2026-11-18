@@ -5,7 +5,7 @@
 //! segment can never smuggle in a `/`, a dot segment or invalid UTF-8.
 
 use crate::ir::{Pattern, Seg};
-use crate::value::{Value, bytes_eq};
+use crate::value::bytes_eq;
 use alloc::vec::Vec;
 
 /// Why a request path was rejected.
@@ -178,17 +178,39 @@ fn tail_ok(s: &[u8], i: usize, tail: usize, lo: u8, hi: u8) -> usize {
     tail + 1
 }
 
+/// A value captured by a pattern.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum Capture {
+    /// The segment a `Var` matched.
+    One(Vec<u8>),
+    /// The segments the rest capture matched; empty for zero segments.
+    Rest(Vec<Vec<u8>>),
+}
+
+/// Copies a byte string.
+fn copy_bytes(s: &[u8]) -> Vec<u8> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < s.len() {
+        out.push(s[i]);
+        i += 1;
+    }
+    out
+}
+
 /// Matches a canonical path against a pattern.
 ///
 /// Without `rest` the path must have exactly as many segments as the pattern;
 /// with `rest` the pattern must match a prefix. Returns the captures in
-/// order: each `Var` as a string, then the rest as a list of strings, empty
-/// when it matched zero segments.
-pub fn match_pattern(p: &Pattern, path: &[Vec<u8>]) -> Option<Vec<Value>> {
-    if !p.rest && path.len() != p.segs.len() {
-        return None;
-    }
-    if p.rest && path.len() < p.segs.len() {
+/// order: each `Var` as `One`, then `Rest` when the pattern has a rest,
+/// empty when it matched zero segments.
+pub fn match_pattern(p: &Pattern, segments: &[Vec<u8>]) -> Option<Vec<Capture>> {
+    let wrong_length = if p.rest {
+        segments.len() < p.segs.len()
+    } else {
+        segments.len() != p.segs.len()
+    };
+    if wrong_length {
         return None;
     }
     let mut captures = Vec::new();
@@ -196,22 +218,22 @@ pub fn match_pattern(p: &Pattern, path: &[Vec<u8>]) -> Option<Vec<Value>> {
     while i < p.segs.len() {
         match &p.segs[i] {
             Seg::Lit(lit) => {
-                if !bytes_eq(lit, &path[i]) {
+                if !bytes_eq(lit, &segments[i]) {
                     return None;
                 }
             }
-            Seg::Var => captures.push(Value::Str(path[i].clone())),
+            Seg::Var => captures.push(Capture::One(copy_bytes(&segments[i]))),
         }
         i += 1;
     }
     if p.rest {
         let mut tail = Vec::new();
         let mut j = p.segs.len();
-        while j < path.len() {
-            tail.push(Value::Str(path[j].clone()));
+        while j < segments.len() {
+            tail.push(copy_bytes(&segments[j]));
             j += 1;
         }
-        captures.push(Value::List(tail));
+        captures.push(Capture::Rest(tail));
     }
     Some(captures)
 }

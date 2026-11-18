@@ -52,4 +52,249 @@ def decide.combine
   then ok decide.Verdict.Allow
   else ok decide.Verdict.Deny
 
+/-- [facl_core::value::bytes_eq]: loop 0:
+    Source: 'crates/facl-core/src/value.rs', lines 47:4-54:1
+    Visibility: public -/
+@[rust_loop]
+def value.bytes_eq_loop
+  (a : Slice Std.U8) (b : Slice Std.U8) (i : Std.Usize) : Result Bool := do
+  let i1 := Slice.len a
+  if i < i1
+  then
+    let i2 ← Slice.index_usize a i
+    let i3 ← Slice.index_usize b i
+    if i2 != i3
+    then ok false
+    else let i4 ← i + 1#usize
+         value.bytes_eq_loop a b i4
+  else ok true
+partial_fixpoint
+
+/-- [facl_core::value::bytes_eq]:
+    Source: 'crates/facl-core/src/value.rs', lines 42:0-54:1
+    Visibility: public -/
+def value.bytes_eq (a : Slice Std.U8) (b : Slice Std.U8) : Result Bool := do
+  let i := Slice.len a
+  let i1 := Slice.len b
+  if i != i1
+  then ok false
+  else value.bytes_eq_loop a b 0#usize
+
+/-- [facl_core::path::copy_bytes]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 194:4-197:5 -/
+@[rust_loop]
+def path.copy_bytes_loop
+  (s : Slice Std.U8) (out : alloc.vec.Vec Std.U8) (i : Std.Usize) :
+  Result (alloc.vec.Vec Std.U8)
+  := do
+  let i1 := Slice.len s
+  if i < i1
+  then
+    let i2 ← Slice.index_usize s i
+    let out1 ← alloc.vec.Vec.push out i2
+    let i3 ← i + 1#usize
+    path.copy_bytes_loop s out1 i3
+  else ok out
+partial_fixpoint
+
+/-- [facl_core::path::copy_bytes]:
+    Source: 'crates/facl-core/src/path.rs', lines 191:0-199:1 -/
+@[reducible]
+def path.copy_bytes (s : Slice Std.U8) : Result (alloc.vec.Vec Std.U8) := do
+  path.copy_bytes_loop s (alloc.vec.Vec.new Std.U8) 0#usize
+
+/-- [facl_core::path::match_pattern]: loop 1:
+    Source: 'crates/facl-core/src/path.rs', lines 232:8-235:9
+    Visibility: public -/
+@[rust_loop]
+def path.match_pattern_loop0_loop0
+  (segments : Slice (alloc.vec.Vec Std.U8))
+  (tail : alloc.vec.Vec (alloc.vec.Vec Std.U8)) (j : Std.Usize) :
+  Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+  := do
+  let i := Slice.len segments
+  if j < i
+  then
+    let v ← Slice.index_usize segments j
+    let s := alloc.vec.Vec.deref v
+    let v1 ← path.copy_bytes s
+    let tail1 ← alloc.vec.Vec.push tail v1
+    let j1 ← j + 1#usize
+    path.match_pattern_loop0_loop0 segments tail1 j1
+  else ok tail
+partial_fixpoint
+
+/-- [facl_core::path::match_pattern]: loop 0:
+    Source: 'crates/facl-core/src/path.rs', lines 218:4-239:1
+    Visibility: public -/
+@[rust_loop]
+def path.match_pattern_loop0
+  (v : alloc.vec.Vec ir.Seg) (b : Bool)
+  (segments : Slice (alloc.vec.Vec Std.U8))
+  (captures : alloc.vec.Vec path.Capture) (i : Std.Usize) :
+  Result (Option (alloc.vec.Vec path.Capture))
+  := do
+  let i1 := alloc.vec.Vec.len v
+  if i < i1
+  then
+    let s ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice ir.Seg) v i
+    match s with
+    | ir.Seg.Lit lit =>
+      let s1 := alloc.vec.Vec.deref lit
+      let v1 ← Slice.index_usize segments i
+      let s2 := alloc.vec.Vec.deref v1
+      let b1 ← value.bytes_eq s1 s2
+      if b1
+      then
+        let i2 ← i + 1#usize
+        path.match_pattern_loop0 v b segments captures i2
+      else ok none
+    | ir.Seg.Var =>
+      let v1 ← Slice.index_usize segments i
+      let s1 := alloc.vec.Vec.deref v1
+      let v2 ← path.copy_bytes s1
+      let captures1 ← alloc.vec.Vec.push captures (path.Capture.One v2)
+      let i2 ← i + 1#usize
+      path.match_pattern_loop0 v b segments captures1 i2
+  else
+    if b
+    then
+      let j := alloc.vec.Vec.len v
+      let tail ←
+        path.match_pattern_loop0_loop0 segments (alloc.vec.Vec.new
+          (alloc.vec.Vec Std.U8)) j
+      let captures1 ← alloc.vec.Vec.push captures (path.Capture.Rest tail)
+      ok (some captures1)
+    else ok (some captures)
+partial_fixpoint
+
+/-- [facl_core::path::match_pattern]:
+    Source: 'crates/facl-core/src/path.rs', lines 207:0-239:1
+    Visibility: public -/
+def path.match_pattern
+  (p : ir.Pattern) (segments : Slice (alloc.vec.Vec Std.U8)) :
+  Result (Option (alloc.vec.Vec path.Capture))
+  := do
+  let wrong_length ←
+    if p.rest
+    then
+      let i := Slice.len segments
+      let i1 := alloc.vec.Vec.len p.segs
+      ok (i < i1)
+    else
+      let i := Slice.len segments
+      let i1 := alloc.vec.Vec.len p.segs
+      ok (i != i1)
+  if wrong_length
+  then ok none
+  else
+    path.match_pattern_loop0 p.segs p.rest segments (alloc.vec.Vec.new
+      path.Capture) 0#usize
+
+/-- [facl_core::decide::apply_rule]: loop 0:
+    Source: 'crates/facl-core/src/decide.rs', lines 124:4-131:5 -/
+@[rust_loop]
+def decide.apply_rule_loop
+  {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
+  (v : alloc.vec.Vec (ir.CompiledAllow C)) (method : Std.U8) (conds : E)
+  (outcomes : alloc.vec.Vec decide.Outcome)
+  (captures : alloc.vec.Vec path.Capture) (applicable : Bool) (j : Std.Usize) :
+  Result ((alloc.vec.Vec decide.Outcome) × Bool)
+  := do
+  let i := alloc.vec.Vec.len v
+  if j < i
+  then
+    let allow ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+        (ir.CompiledAllow C)) v j
+    let i1 ← lift (allow.methods &&& method)
+    let (outcomes1, applicable1) ←
+      if i1 != 0#u8
+      then
+        do
+        let s := alloc.vec.Vec.deref captures
+        let o ← ConditionsInst.outcome conds allow.cond s
+        let outcomes2 ← alloc.vec.Vec.push outcomes o
+        ok (outcomes2, true)
+      else ok (outcomes, applicable)
+    let j1 ← j + 1#usize
+    decide.apply_rule_loop ConditionsInst v method conds outcomes1 captures
+      applicable1 j1
+  else ok (outcomes, applicable)
+partial_fixpoint
+
+/-- [facl_core::decide::apply_rule]:
+    Source: 'crates/facl-core/src/decide.rs', lines 112:0-133:1 -/
+def decide.apply_rule
+  {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
+  (rule : ir.Rule C) (method : Std.U8)
+  (segments : Slice (alloc.vec.Vec Std.U8)) (conds : E)
+  (outcomes : alloc.vec.Vec decide.Outcome) :
+  Result ((alloc.vec.Vec decide.Outcome) × Bool × Bool)
+  := do
+  let o ← path.match_pattern rule.pattern segments
+  match o with
+  | none => ok (outcomes, false, false)
+  | some captures =>
+    let (outcomes1, applicable) ←
+      decide.apply_rule_loop ConditionsInst rule.allows method conds outcomes
+        captures false 0#usize
+    ok (outcomes1, true, applicable)
+
+/-- [facl_core::decide::decide_with]: loop 0:
+    Source: 'crates/facl-core/src/decide.rs', lines 150:4-161:5
+    Visibility: public -/
+@[rust_loop]
+def decide.decide_with_loop
+  {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
+  (p : ir.Policy C) (method : Std.U8) (segments : Slice (alloc.vec.Vec Std.U8))
+  (conds : E) (outcomes : alloc.vec.Vec decide.Outcome) (matched : Bool)
+  (applicable : Bool) (i : Std.Usize) :
+  Result ((alloc.vec.Vec decide.Outcome) × Bool × Bool)
+  := do
+  let i1 := alloc.vec.Vec.len p.rules
+  if i < i1
+  then
+    let rule ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice (ir.Rule C))
+        p.rules i
+    let (more, m, a) ←
+      decide.apply_rule ConditionsInst rule method segments conds outcomes
+    let matched1 ← if m
+                     then ok true
+                     else ok matched
+    let applicable1 ← if a
+                        then ok true
+                        else ok applicable
+    let i2 ← i + 1#usize
+    decide.decide_with_loop ConditionsInst p method segments conds more
+      matched1 applicable1 i2
+  else ok (outcomes, matched, applicable)
+partial_fixpoint
+
+/-- [facl_core::decide::decide_with]:
+    Source: 'crates/facl-core/src/decide.rs', lines 140:0-176:1
+    Visibility: public -/
+def decide.decide_with
+  {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
+  (p : ir.Policy C) (method : Std.U8) (segments : Slice (alloc.vec.Vec Std.U8))
+  (conds : E) :
+  Result decide.Decision
+  := do
+  let (outcomes, matched, applicable) ←
+    decide.decide_with_loop ConditionsInst p method segments conds
+      (alloc.vec.Vec.new decide.Outcome) false false 0#usize
+  let s := alloc.vec.Vec.deref outcomes
+  let v ← decide.combine s
+  match v with
+  | decide.Verdict.Allow => ok decide.Decision.Allow
+  | decide.Verdict.Deny =>
+    if matched
+    then
+      if applicable
+      then ok (decide.Decision.Deny decide.DenyReason.ConditionsNotMet)
+      else ok (decide.Decision.Deny decide.DenyReason.NoAllowForMethod)
+    else ok (decide.Decision.Deny decide.DenyReason.NoMatchingRule)
+
 end FaclCore

@@ -1,8 +1,8 @@
 //! Rule combination and the allow or deny decision.
 
 use crate::eval::{Env, Host, eval};
-use crate::ir::Policy;
-use crate::path::match_pattern;
+use crate::ir::{CExpr, Policy, Rule};
+use crate::path::{Capture, match_pattern};
 use crate::value::{Value, bytes_eq};
 use alloc::vec::Vec;
 
@@ -101,50 +101,131 @@ pub fn method_bit(name: &[u8]) -> u8 {
     }
 }
 
-/// Decides a request.
+/// Evaluates the condition of one applicable allow.
+pub trait Conditions<C> {
+    /// What `cond` contributes, given the captures of the matched pattern.
+    fn outcome(&self, cond: &C, captures: &[Capture]) -> Outcome;
+}
+
+/// Matches one rule. Returns the outcomes extended by each allow that lists
+/// the method, whether the pattern matched, and whether an allow applied.
+fn apply_rule<C, E: Conditions<C>>(
+    rule: &Rule<C>,
+    method: u8,
+    segments: &[Vec<u8>],
+    conds: &E,
+    mut outcomes: Vec<Outcome>,
+) -> (Vec<Outcome>, bool, bool) {
+    let Some(captures) = match_pattern(&rule.pattern, segments) else {
+        return (outcomes, false, false);
+    };
+    let mut applicable = false;
+    let mut j = 0;
+    while j < rule.allows.len() {
+        let allow = &rule.allows[j];
+        if allow.methods & method != 0 {
+            applicable = true;
+            outcomes.push(conds.outcome(&allow.cond, &captures));
+        }
+        j += 1;
+    }
+    (outcomes, true, applicable)
+}
+
+/// Decides a request, with the conditions evaluated by `conds`.
 ///
 /// A request is allowed only when a rule's pattern matches its whole path, an
-/// allow of that rule lists the method, and the allow's condition evaluates
-/// to exactly `true`. Every other request is denied.
-pub fn decide<H: Host>(p: &Policy, r: &Request, host: &H) -> Decision {
+/// allow of that rule lists the method, and the allow's condition is granted.
+/// Every other request is denied.
+pub fn decide_with<C, E: Conditions<C>>(
+    p: &Policy<C>,
+    method: u8,
+    segments: &[Vec<u8>],
+    conds: &E,
+) -> Decision {
     let mut outcomes = Vec::new();
     let mut matched = false;
     let mut applicable = false;
     let mut i = 0;
     while i < p.rules.len() {
         let rule = &p.rules[i];
-        if let Some(slots) = match_pattern(&rule.pattern, &r.path) {
+        let (more, m, a) = apply_rule(rule, method, segments, conds, outcomes);
+        outcomes = more;
+        if m {
             matched = true;
-            let env = Env {
-                slots,
-                request: r.request.clone(),
-                context: r.context.clone(),
-            };
-            let mut j = 0;
-            while j < rule.allows.len() {
-                let allow = &rule.allows[j];
-                if allow.methods & r.method != 0 {
-                    applicable = true;
-                    match eval(&allow.cond, &env, host) {
-                        Ok(Value::Bool(true)) => outcomes.push(Outcome::Granted),
-                        _ => outcomes.push(Outcome::NotGranted),
-                    }
-                }
-                j += 1;
-            }
+        }
+        if a {
+            applicable = true;
         }
         i += 1;
     }
     match combine(&outcomes) {
         Verdict::Allow => Decision::Allow,
         Verdict::Deny => {
-            if !matched {
-                Decision::Deny(DenyReason::NoMatchingRule)
-            } else if !applicable {
-                Decision::Deny(DenyReason::NoAllowForMethod)
+            if matched {
+                if applicable {
+                    Decision::Deny(DenyReason::ConditionsNotMet)
+                } else {
+                    Decision::Deny(DenyReason::NoAllowForMethod)
+                }
             } else {
-                Decision::Deny(DenyReason::ConditionsNotMet)
+                Decision::Deny(DenyReason::NoMatchingRule)
             }
         }
     }
+}
+
+/// The CEL evaluator, bound to one request.
+pub struct HostConditions<'a, H> {
+    /// The host functions.
+    pub host: &'a H,
+    /// The `request` value.
+    pub request: &'a Value,
+    /// The `context` value.
+    pub context: &'a Value,
+}
+
+impl<H: Host> Conditions<CExpr> for HostConditions<'_, H> {
+    fn outcome(&self, cond: &CExpr, captures: &[Capture]) -> Outcome {
+        let mut slots = Vec::new();
+        let mut k = 0;
+        while k < captures.len() {
+            match &captures[k] {
+                Capture::One(s) => slots.push(Value::Str(s.clone())),
+                Capture::Rest(ss) => {
+                    let mut items = Vec::new();
+                    let mut m = 0;
+                    while m < ss.len() {
+                        items.push(Value::Str(ss[m].clone()));
+                        m += 1;
+                    }
+                    slots.push(Value::List(items));
+                }
+            }
+            k += 1;
+        }
+        let env = Env {
+            slots,
+            request: self.request,
+            context: self.context,
+        };
+        match eval(cond, &env, self.host) {
+            Ok(Value::Bool(true)) => Outcome::Granted,
+            _ => Outcome::NotGranted,
+        }
+    }
+}
+
+/// Decides a request.
+///
+/// A request is allowed only when a rule's pattern matches its whole path, an
+/// allow of that rule lists the method, and the allow's condition evaluates
+/// to exactly `true`. Every other request is denied.
+pub fn decide<H: Host>(p: &Policy, r: &Request, host: &H) -> Decision {
+    let conds = HostConditions {
+        host,
+        request: &r.request,
+        context: &r.context,
+    };
+    decide_with(p, r.method, &r.path, &conds)
 }

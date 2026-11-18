@@ -34,12 +34,15 @@ pub mod path;
 pub mod value;
 
 pub use ast::*;
-pub use decide::{Decision, DenyReason, Outcome, Request, Verdict, combine, decide, method_bit};
+pub use decide::{
+    Conditions, Decision, DenyReason, HostConditions, Outcome, Request, Verdict, combine, decide,
+    decide_with, method_bit,
+};
 pub use eval::{Env, Host, eval};
 pub use footprint::{Footprint, footprint};
 pub use ir::{CExpr, CompiledAllow, Pattern, Policy, Rule, Seg};
 pub use lower::{LowerError, LowerErrorKind, MAX_DEPTH, lower};
-pub use path::{PathError, canonicalize, match_pattern};
+pub use path::{Capture, PathError, canonicalize, match_pattern};
 pub use value::{EvalError, Value, bytes_eq, map_get, value_eq};
 
 #[cfg(test)]
