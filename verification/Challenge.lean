@@ -54,6 +54,16 @@ theorem canonicalize_segment {raw : List UInt8} {segs : List (List UInt8)}
 
 end Facl
 
+namespace Facl
+
+theorem lower_allow_methods {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (svc : Service α A) (p : Policy α C)
+    (h : lower reserved compile svc = .ok p) :
+    ((p.rules.flatMap (·.allows)).map (·.methods)).Perm (svc.blocks.flatMap Match.allowMethods) := by
+  sorry
+
+end Facl
+
 open Aeneas Aeneas.Std Aeneas.Std.Result
 
 namespace FaclCore.decide
@@ -83,6 +93,10 @@ theorem method_bit_spec (bytes : Slice U8) :
     method_bit bytes ⦃ bit => bit.val = Facl.methodBit (bytesToSpec bytes) ⦄ := by
   sorry
 
+theorem action_bits_spec (bytes : Slice U8) :
+    action_bits bytes ⦃ r => r.map (·.val) = Facl.actionBits (bytesToSpec bytes) ⦄ := by
+  sorry
+
 end FaclCore.decide
 
 namespace FaclCore.path
@@ -99,3 +113,17 @@ theorem canonicalize_spec (raw : Slice U8) :
   sorry
 
 end FaclCore.path
+
+namespace FaclCore.lower
+
+theorem lower_with_spec {E C K : Type} (inst : CompileCond K E C) (service : ast.Service E)
+    (k : K) (compile : Option E → List (List U8) → Except Facl.LowerError C)
+    (hsize : (ast.serviceToSpec service).size ≤ Usize.max)
+    (hcompile : ∀ cond names, inst.compile k cond names ⦃ r =>
+      resultToSpec id r = compile cond (names.val.map (·.val)) ⦄) :
+    lower_with inst service k ⦃ r =>
+      resultToSpec ir.policyToSpec r =
+        Facl.lower reservedNames compile (ast.serviceToSpec service) ⦄ := by
+  sorry
+
+end FaclCore.lower

@@ -121,3 +121,111 @@ theorem decide_mono (p q : Policy α C) (req : Request α)
   exact ⟨r, h r hr, rest⟩
 
 end Facl
+
+namespace Facl
+
+mutual
+private theorem lowerMatch_perm {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (depth : Nat) (segs : List (Seg α))
+    (names : List α) (rules : List (Rule α C)) :
+    (m : Match α A) → lowerMatch reserved compile depth segs names m = .ok rules →
+    ((rules.flatMap (·.allows)).map (·.methods)).Perm m.allowMethods
+  | .mk pattern body, h => by
+    simp only [lowerMatch] at h
+    split at h
+    · cases h
+    · cases hp : lowerPattern reserved pattern segs names with
+      | error e => simp [hp, bind, Except.bind] at h
+      | ok v =>
+        obtain ⟨segs', names', rest⟩ := v
+        cases ha : lowerAllows compile names' rest body with
+        | error e => simp [hp, ha, bind, Except.bind] at h
+        | ok allows =>
+          cases hn : lowerNested reserved compile (depth + 1) segs' names' body with
+          | error e => simp [hp, ha, hn, bind, Except.bind] at h
+          | ok nested =>
+            simp only [hp, ha, hn, bind, Except.bind] at h
+            cases h
+            have := lowerNested_perm reserved compile (depth + 1) segs' names' rest allows
+              nested body ha hn
+            by_cases he : allows.isEmpty
+            · simp [List.isEmpty_iff.mp he, Match.allowMethods] at this ⊢
+              exact this
+            · simpa [he, Match.allowMethods] using this
+
+private theorem lowerNested_perm {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (depth : Nat) (segs : List (Seg α))
+    (names : List α) (rest : Bool) (allows : List (Allow C)) (rules : List (Rule α C)) :
+    (items : List (Item α A)) → lowerAllows compile names rest items = .ok allows →
+    lowerNested reserved compile depth segs names items = .ok rules →
+    (allows.map (·.methods) ++ (rules.flatMap (·.allows)).map (·.methods)).Perm
+      (Match.bodyAllowMethods items)
+  | [], ha, hn => by
+    simp only [lowerAllows, lowerNested] at ha hn
+    cases ha; cases hn
+    simp [Match.bodyAllowMethods]
+  | .allow a :: items, ha, hn => by
+    simp only [lowerAllows, lowerNested] at ha hn
+    cases hc : compile a.cond names with
+    | error e => simp [hc, bind, Except.bind] at ha
+    | ok c =>
+      cases hl : lowerAllows compile names rest items with
+      | error e => simp [hc, hl, bind, Except.bind] at ha
+      | ok as =>
+        simp only [hc, hl, bind, Except.bind] at ha
+        cases ha
+        have := lowerNested_perm reserved compile depth segs names rest as rules items hl hn
+        simpa [Match.bodyAllowMethods] using this
+  | .nested m :: items, ha, hn => by
+    simp only [lowerAllows, lowerNested] at ha hn
+    split at ha
+    · cases ha
+    · cases hm : lowerMatch reserved compile depth segs names m with
+      | error e => simp [hm, bind, Except.bind] at hn
+      | ok rm =>
+        cases hr : lowerNested reserved compile depth segs names items with
+        | error e => simp [hm, hr, bind, Except.bind] at hn
+        | ok more =>
+          simp only [hm, hr, bind, Except.bind] at hn
+          cases hn
+          have h1 := lowerMatch_perm reserved compile depth segs names rm m hm
+          have h2 := lowerNested_perm reserved compile depth segs names rest allows more items ha hr
+          simp only [Match.bodyAllowMethods, List.flatMap_append, List.map_append]
+          exact (List.perm_append_comm_assoc _ _ _).trans (h1.append h2)
+end
+
+private theorem lower_perm {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) :
+    (blocks : List (Match α A)) → (rs : List (List (Rule α C))) →
+    blocks.mapM (lowerMatch reserved compile 1 [] []) = .ok rs →
+    ((rs.flatten.flatMap (·.allows)).map (·.methods)).Perm (blocks.flatMap Match.allowMethods)
+  | [], rs, h => by
+    simp only [List.mapM_nil] at h
+    cases h
+    simp
+  | m :: ms, rs, h => by
+    simp only [List.mapM_cons] at h
+    cases hm : lowerMatch reserved compile 1 [] [] m with
+    | error e => simp [hm, bind, Except.bind] at h
+    | ok r =>
+      cases hr : ms.mapM (lowerMatch reserved compile 1 [] []) with
+      | error e => simp [hm, hr, bind, Except.bind] at h
+      | ok rest =>
+        simp only [hm, hr, bind, Except.bind] at h
+        cases h
+        simpa using (lowerMatch_perm reserved compile 1 [] [] r m hm).append
+          (lower_perm reserved compile ms rest hr)
+
+theorem lower_allow_methods {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (svc : Service α A) (p : Policy α C)
+    (h : lower reserved compile svc = .ok p) :
+    ((p.rules.flatMap (·.allows)).map (·.methods)).Perm (svc.blocks.flatMap Match.allowMethods) := by
+  simp only [lower, bind, Except.bind] at h
+  cases hm : svc.blocks.mapM (lowerMatch reserved compile 1 [] []) with
+  | error e => simp [hm] at h
+  | ok rs =>
+    simp only [hm] at h
+    cases h
+    exact lower_perm reserved compile svc.blocks rs hm
+
+end Facl

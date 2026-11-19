@@ -16,7 +16,10 @@
     "Facl.utf8Valid_iff",
     "Facl.canonicalize_segment",
     "FaclCore.decide.method_bit_spec",
-    "FaclCore.path.canonicalize_spec"
+    "FaclCore.path.canonicalize_spec",
+    "Facl.lower_allow_methods",
+    "FaclCore.decide.action_bits_spec",
+    "FaclCore.lower.lower_with_spec"
   ],
   "definition_names": [],
   "permitted_axioms": [

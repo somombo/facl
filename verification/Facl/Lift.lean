@@ -73,4 +73,45 @@ def path.canonicalToSpec :
   | .Ok segs => .ok (segs.val.map (·.val.map byteToSpec))
   | .Err e => .error (pathErrorToSpec e)
 
+def byteOfSpec (b : UInt8) : U8 := ⟨b.toBitVec⟩
+
+def reservedNames : List (List U8) := ["request", "context"].map fun s => (Facl.utf8 s).map byteOfSpec
+
+def ast.patSegToSpec : ast.PatSeg → Facl.PatSeg (List U8)
+  | .Lit s => .lit s.val
+  | .Var n => .var n.val
+  | .Rest n => .rest n.val
+
+mutual
+def ast.matchToSpec {E : Type} : ast.Match E → Facl.Match (List U8) E
+  | .mk pattern ⟨⟨_, body, _⟩⟩ _ => .mk (pattern.val.map ast.patSegToSpec) (ast.bodyToSpec body)
+
+/-- The items of a body in order. It recurses on the `ListN` inside the body's `Vec`, so
+that Lean sees the recursion is structural. -/
+def ast.bodyToSpec {E : Type} {n : Nat} :
+    Aeneas.Data.ListN.ListN (ast.Item E) n → List (Facl.Item (List U8) E)
+  | .nil => []
+  | .cons (.Match m) items => .nested (ast.matchToSpec m) :: ast.bodyToSpec items
+  | .cons (.Allow a) items => .allow ⟨a.methods.val, a.cond⟩ :: ast.bodyToSpec items
+end
+
+def ast.serviceToSpec {E : Type} (s : ast.Service E) : Facl.Service (List U8) E :=
+  ⟨s.«matches».val.map ast.matchToSpec⟩
+
+def lower.kindToSpec : lower.LowerErrorKind → Facl.LowerError
+  | .UnknownIdentifier => .unknownIdentifier
+  | .ReservedCaptureName => .reservedCaptureName
+  | .DuplicateCapture => .duplicateCapture
+  | .RestNotLast => .restNotLast
+  | .RestWithChildren => .restWithChildren
+  | .UnknownFunction => .unknownFunction
+  | .BadArity => .badArity
+  | .BadTarget => .badTarget
+  | .TooDeep => .tooDeep
+
+def lower.resultToSpec {T T' : Type} (f : T → T') :
+    core.result.Result T lower.LowerError → Except Facl.LowerError T'
+  | .Ok x => .ok (f x)
+  | .Err e => .error (kindToSpec e.kind)
+
 end FaclCore

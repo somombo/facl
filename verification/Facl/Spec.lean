@@ -68,13 +68,16 @@ but a `Nat` rather than a `u8` (no overflow modelling). -/
 structure Allow (Cond : Type) where
   methods : Nat
   cond : Cond
+  deriving DecidableEq
 
 structure Rule (α : Type) (Cond : Type) where
   pattern : Pattern α
   allows : List (Allow Cond)
+  deriving DecidableEq
 
 structure Policy (α : Type) (Cond : Type) where
   rules : List (Rule α Cond)
+  deriving DecidableEq
 
 /-- Rust `Request` restricted to what the spec needs: a method bit and canonical segments.
 The `request` and `context` values are folded into the abstract evaluator. -/
@@ -97,6 +100,20 @@ def methodBit (name : List UInt8) : Nat :=
   match methodBits.find? (utf8 ·.1 = name) with
   | some (_, bit) => bit
   | none => 0
+
+/-- The actions an allow can name, in upper case, and the methods each grants. -/
+def actions : List (String × List String) :=
+  [("GET", ["GET"]), ("HEAD", ["HEAD"]), ("OPTIONS", ["OPTIONS"]), ("POST", ["POST"]),
+   ("PUT", ["PUT"]), ("PATCH", ["PATCH"]), ("DELETE", ["DELETE"]),
+   ("READ", ["GET", "HEAD", "OPTIONS"]), ("WRITE", ["POST", "PUT", "PATCH", "DELETE"])]
+
+def asciiUpper (b : UInt8) : UInt8 := if 'a'.toUInt8 ≤ b ∧ b ≤ 'z'.toUInt8 then b - 32 else b
+
+/-- Rust `action_bits`: the action is looked up ignoring ASCII case, and its bits are those of
+its methods. -/
+def actionBits (name : List UInt8) : Option Nat :=
+  (actions.find? (utf8 ·.1 = name.map asciiUpper)).map fun a =>
+    (a.2.map fun m => methodBit (utf8 m)).foldl (· ||| ·) 0
 
 /-- Outcomes of the applicable allows of one rule (empty if the rule does not match). -/
 def ruleOutcomes {α C : Type} [DecidableEq α] (eval : C → List (Cap α) → Request α → Outcome)
@@ -230,5 +247,144 @@ def decodeSegment (seg : List UInt8) : Except PathError (List UInt8) := do
 def canonicalize (raw : List UInt8) : Except PathError (List (List UInt8)) := do
   let segs ← splitPath raw
   segs.mapM decodeSegment
+
+/-! ## Lowering
+
+Rust `lower_with` and its helpers, from `lower.rs`. Conditions are compiled by an abstract
+`compile`, as `decide` evaluates them with an abstract `eval`. Spans are left out. -/
+
+/-- Rust `LowerErrorKind`. -/
+inductive LowerError where
+  | unknownIdentifier
+  | reservedCaptureName
+  | duplicateCapture
+  | restNotLast
+  | restWithChildren
+  | unknownFunction
+  | badArity
+  | badTarget
+  | tooDeep
+  deriving DecidableEq, Repr
+
+/-- Rust `PatSeg`. -/
+inductive PatSeg (α : Type) where
+  | lit (s : α)
+  | var (name : α)
+  | rest (name : α)
+  deriving DecidableEq, Repr
+
+/-- Rust `ast::Allow`. -/
+structure AllowStmt (A : Type) where
+  methods : Nat
+  cond : Option A
+
+mutual
+/-- Rust `Item`. -/
+inductive Item (α A : Type) where
+  | nested (m : Match α A)
+  | allow (a : AllowStmt A)
+
+/-- Rust `ast::Match`. -/
+inductive Match (α A : Type) where
+  | mk (pattern : List (PatSeg α)) (body : List (Item α A))
+end
+
+/-- Rust `Service`, with its top-level matches. -/
+structure Service (α A : Type) where
+  blocks : List (Match α A)
+
+mutual
+/-- The number of matches, pattern segments and allows. -/
+def Match.size {α A : Type} : Match α A → Nat
+  | .mk pattern body => 1 + pattern.length + Match.bodySize body
+
+def Match.bodySize {α A : Type} : List (Item α A) → Nat
+  | [] => 0
+  | .allow _ :: items => 1 + Match.bodySize items
+  | .nested m :: items => m.size + Match.bodySize items
+end
+
+def Service.size {α A : Type} (s : Service α A) : Nat := (s.blocks.map Match.size).sum
+
+/-- Rust `MAX_DEPTH`. -/
+def maxDepth : Nat := 64
+
+/-- Rust `bind`: reserved names, then repeated ones, are rejected. -/
+def bindName {α : Type} [DecidableEq α] (reserved names : List α) (n : α) :
+    Except LowerError (List α) :=
+  if n ∈ reserved then .error .reservedCaptureName
+  else if n ∈ names then .error .duplicateCapture
+  else .ok (names ++ [n])
+
+/-- Rust `lower_pattern`: extends the enclosing segments and capture names, and says whether
+the pattern ends in a rest capture. -/
+def lowerPattern {α : Type} [DecidableEq α] (reserved : List α) :
+    List (PatSeg α) → List (Seg α) → List α → Except LowerError (List (Seg α) × List α × Bool)
+  | [], segs, names => .ok (segs, names, false)
+  | .lit s :: ps, segs, names => lowerPattern reserved ps (segs ++ [.lit s]) names
+  | .var n :: ps, segs, names => do
+    let names ← bindName reserved names n
+    lowerPattern reserved ps (segs ++ [.var]) names
+  | .rest n :: ps, segs, names =>
+    if ps ≠ [] then .error .restNotLast
+    else do
+      let names ← bindName reserved names n
+      .ok (segs, names, true)
+
+/-- Rust `lower_allows`: each allow's condition is compiled with the capture names in scope,
+and a nested match under a rest capture is an error. -/
+def lowerAllows {α A C : Type} (compile : Option A → List α → Except LowerError C)
+    (names : List α) (rest : Bool) : List (Item α A) → Except LowerError (List (Allow C))
+  | [] => .ok []
+  | .allow a :: items => do
+    let cond ← compile a.cond names
+    let allows ← lowerAllows compile names rest items
+    .ok (⟨a.methods, cond⟩ :: allows)
+  | .nested _ :: items =>
+    if rest then .error .restWithChildren else lowerAllows compile names rest items
+
+mutual
+/-- Rust `lower_match`: the match's own rule, if it has allows, then its nested matches'
+rules, which extend its segments and names. -/
+def lowerMatch {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (depth : Nat) (segs : List (Seg α))
+    (names : List α) : Match α A → Except LowerError (List (Rule α C))
+  | .mk pattern body =>
+    if depth > maxDepth then .error .tooDeep
+    else do
+      let (segs, names, rest) ← lowerPattern reserved pattern segs names
+      let allows ← lowerAllows compile names rest body
+      let nested ← lowerNested reserved compile (depth + 1) segs names body
+      .ok ((if allows.isEmpty then [] else [⟨⟨segs, rest⟩, allows⟩]) ++ nested)
+
+/-- Rust `lower_children`. -/
+def lowerNested {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (depth : Nat) (segs : List (Seg α))
+    (names : List α) : List (Item α A) → Except LowerError (List (Rule α C))
+  | [] => .ok []
+  | .allow _ :: items => lowerNested reserved compile depth segs names items
+  | .nested m :: items => do
+    let rules ← lowerMatch reserved compile depth segs names m
+    let more ← lowerNested reserved compile depth segs names items
+    .ok (rules ++ more)
+end
+
+/-- Rust `lower_with`: top-level matches start at depth 1, with no segments or names. -/
+def lower {α A C : Type} [DecidableEq α] (reserved : List α)
+    (compile : Option A → List α → Except LowerError C) (svc : Service α A) :
+    Except LowerError (Policy α C) := do
+  let rules ← svc.blocks.mapM (lowerMatch reserved compile 1 [] [])
+  .ok ⟨rules.flatten⟩
+
+mutual
+/-- The method bits of every allow statement, in source order. -/
+def Match.allowMethods {α A : Type} : Match α A → List Nat
+  | .mk _ body => Match.bodyAllowMethods body
+
+def Match.bodyAllowMethods {α A : Type} : List (Item α A) → List Nat
+  | [] => []
+  | .allow a :: items => a.methods :: Match.bodyAllowMethods items
+  | .nested m :: items => m.allowMethods ++ Match.bodyAllowMethods items
+end
 
 end Facl

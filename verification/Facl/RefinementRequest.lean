@@ -1108,6 +1108,108 @@ private theorem usize_lit5 (h) : Usize.ofNatCore 5 h = 5#usize := rfl
 private theorem usize_lit6 (h) : Usize.ofNatCore 6 h = 6#usize := rfl
 private theorem usize_lit7 (h) : Usize.ofNatCore 7 h = 7#usize := rfl
 
+private theorem asciiUpper_ofNat : ∀ n < 256, Facl.asciiUpper (UInt8.ofNat n) =
+    UInt8.ofNat (if 97 ≤ n ∧ n ≤ 122 then n - 32 else n) := by
+  set_option maxRecDepth 100000 in decide
+
+private theorem ascii_upper_loop_spec («name» : Slice U8) (upper : alloc.vec.Vec U8) (i : Usize)
+    (hb : upper.length + («name».length - i.val) ≤ Usize.max) :
+    decide.ascii_upper_loop «name» upper i ⦃ r =>
+      r.val.map byteToSpec =
+        upper.val.map byteToSpec ++
+          ((«name».val.drop i.val).map byteToSpec).map Facl.asciiUpper ⦄ := by
+  unfold decide.ascii_upper_loop
+  simp only [UScalar.lt_equiv, Slice.len_val]
+  split
+  · rename_i hlt
+    have hlt' : i.val < «name».val.length := hlt
+    apply WP.spec_bind (Slice.index_usize_spec «name» i hlt')
+    intro b hb2
+    have hdrop : «name».val.drop i.val = b :: «name».val.drop (i.val + 1) := by
+      rw [List.drop_eq_getElem_cons hlt', hb2]
+    have hbv : b.val < 256 := by scalar_tac
+    have step : ∀ c : U8, byteToSpec c = Facl.asciiUpper (byteToSpec b) →
+        (do let upper1 ← alloc.vec.Vec.push upper c
+            let i3 ← i + 1#usize
+            decide.ascii_upper_loop «name» upper1 i3) ⦃ r =>
+          r.val.map byteToSpec =
+            upper.val.map byteToSpec ++
+              ((«name».val.drop i.val).map byteToSpec).map Facl.asciiUpper ⦄ := by
+      intro c hc
+      apply WP.spec_bind (alloc.vec.Vec.push_spec upper c (by scalar_tac))
+      intro upper1 hu1
+      apply WP.spec_bind (Usize.add_spec (x := i) (y := 1#usize) (by scalar_tac))
+      intro i3 hi3
+      have hi3v : i3.val = i.val + 1 := by simpa using hi3
+      refine WP.spec_mono (ascii_upper_loop_spec «name» upper1 i3
+        (by simp only [alloc.vec.Vec.length, hu1, hi3v]; simp; scalar_tac)) ?_
+      intro r hr
+      rw [hr, hi3v, hdrop]
+      simp [hu1, hc]
+    simp only [ge_iff_le, UScalar.le_equiv]
+    split
+    · rename_i h97
+      apply WP.spec_bind (U8.sub_spec (x := b) (y := 97#u8) (by scalar_tac))
+      intro i2 hi2
+      split
+      · rename_i h26
+        apply WP.spec_bind (U8.sub_spec (x := b) (y := 32#u8) (by scalar_tac))
+        intro b1 hb1
+        refine step b1 ?_
+        have : b1.val = b.val - 32 := by scalar_tac
+        simp [byteToSpec, asciiUpper_ofNat _ hbv, this, show 97 ≤ b.val ∧ b.val ≤ 122 by scalar_tac]
+      · rename_i h26
+        refine step b ?_
+        simp [byteToSpec, asciiUpper_ofNat _ hbv, show ¬ (97 ≤ b.val ∧ b.val ≤ 122) by scalar_tac]
+    · rename_i h97
+      refine step b ?_
+      simp [byteToSpec, asciiUpper_ofNat _ hbv, show ¬ (97 ≤ b.val ∧ b.val ≤ 122) by scalar_tac]
+  · rename_i hlt
+    refine (WP.spec_ok _).mpr ?_
+    have : «name».val.drop i.val = [] := List.drop_eq_nil_of_le (by simp at hlt; omega)
+    simp [this]
+
+private theorem lit_iff (x : U8) (n : UInt8) : byteToSpec x = n ↔ x.val = n.toNat := by
+  rw [← UInt8.toNat_inj, byteToSpec_toNat]
+
+private theorem actionBits_eq (l : List UInt8) :
+    Facl.actionBits l =
+      if Facl.methodBit (l.map Facl.asciiUpper) ≠ 0 then
+        some (Facl.methodBit (l.map Facl.asciiUpper))
+      else if l.map Facl.asciiUpper = Facl.utf8 "READ" then some 7
+      else if l.map Facl.asciiUpper = Facl.utf8 "WRITE" then some 120 else none := by
+  unfold Facl.actionBits Facl.actions
+  generalize l.map Facl.asciiUpper = m
+  have h1 : Facl.utf8 "GET" = [71, 69, 84] := by decide
+  have h2 : Facl.utf8 "HEAD" = [72, 69, 65, 68] := by decide
+  have h3 : Facl.utf8 "OPTIONS" = [79, 80, 84, 73, 79, 78, 83] := by decide
+  have h4 : Facl.utf8 "POST" = [80, 79, 83, 84] := by decide
+  have h5 : Facl.utf8 "PUT" = [80, 85, 84] := by decide
+  have h6 : Facl.utf8 "PATCH" = [80, 65, 84, 67, 72] := by decide
+  have h7 : Facl.utf8 "DELETE" = [68, 69, 76, 69, 84, 69] := by decide
+  have h8 : Facl.utf8 "READ" = [82, 69, 65, 68] := by decide
+  have h9 : Facl.utf8 "WRITE" = [87, 82, 73, 84, 69] := by decide
+  by_cases e1 : [71, 69, 84] = m
+  · subst e1; decide
+  by_cases e2 : [72, 69, 65, 68] = m
+  · subst e2; decide
+  by_cases e3 : [79, 80, 84, 73, 79, 78, 83] = m
+  · subst e3; decide
+  by_cases e4 : [80, 79, 83, 84] = m
+  · subst e4; decide
+  by_cases e5 : [80, 85, 84] = m
+  · subst e5; decide
+  by_cases e6 : [80, 65, 84, 67, 72] = m
+  · subst e6; decide
+  by_cases e7 : [68, 69, 76, 69, 84, 69] = m
+  · subst e7; decide
+  by_cases e8 : [82, 69, 65, 68] = m
+  · subst e8; decide
+  by_cases e9 : [87, 82, 73, 84, 69] = m
+  · subst e9; decide
+  simp [h1, h2, h3, h4, h5, h6, h7, h8, h9, e1, e2, e3, e4, e5, e6, e7, e8, e9, Ne.symm e8,
+    Ne.symm e9, methodBit_eq m]
+
 theorem method_bit_spec (bytes : Slice U8) :
     method_bit bytes ⦃ bit => bit.val = Facl.methodBit (bytesToSpec bytes) ⦄ := by
   unfold method_bit
@@ -1118,5 +1220,41 @@ theorem method_bit_spec (bytes : Slice U8) :
   rcases l with _ | ⟨a, _ | ⟨b, _ | ⟨c, _ | ⟨d, _ | ⟨e, _ | ⟨f, _ | ⟨g, _ | ⟨h, l⟩⟩⟩⟩⟩⟩⟩⟩ <;>
     simp [Slice.len, hl, Slice.index_usize, usize_lit3, usize_lit4, usize_lit5, usize_lit6, usize_lit7]
   all_goals (clear hs hl; split_ifs <;> (simp only [WP.spec_ok]; scalar_tac))
+
+theorem action_bits_spec (bytes : Slice U8) :
+    action_bits bytes ⦃ r => r.map (·.val) = Facl.actionBits (bytesToSpec bytes) ⦄ := by
+  unfold action_bits
+  apply WP.spec_bind (ascii_upper_loop_spec bytes (alloc.vec.Vec.new U8) 0#usize
+    (by simp [alloc.vec.Vec.length, alloc.vec.Vec.new]))
+  intro upper hu
+  apply WP.spec_bind (method_bit_spec (alloc.vec.Vec.deref upper))
+  intro bit hbit
+  have hm : (alloc.vec.Vec.deref upper).val.map byteToSpec =
+      (bytesToSpec bytes).map Facl.asciiUpper := by
+    simpa [alloc.vec.Vec.deref, bytesToSpec] using hu
+  have hbit' : bit.val = Facl.methodBit ((bytesToSpec bytes).map Facl.asciiUpper) := by
+    rw [← hm]; exact hbit
+  rw [actionBits_eq, ← hbit']
+  by_cases hb0 : bit = 0#u8
+  · have hb : (bit != 0#u8) = false := by simp [hb0]
+    simp only [hb, Bool.false_eq_true, ite_false]
+    have hv : bit.val = 0 := by simp [hb0]
+    rw [hv]
+    simp only [ne_eq, not_true_eq_false, ite_false]
+    rw [← hm]
+    have hd : (alloc.vec.Vec.deref upper).val = upper.val := by simp [alloc.vec.Vec.deref]
+    rw [hd]
+    clear hu hm hbit hbit' hb hv hb0
+    obtain ⟨l, hl⟩ : ∃ l, upper.val = l := ⟨_, rfl⟩
+    have h8 : Facl.utf8 "READ" = [82, 69, 65, 68] := by decide
+    have h9 : Facl.utf8 "WRITE" = [87, 82, 73, 84, 69] := by decide
+    rw [hl, h8, h9]
+    rcases l with _ | ⟨a, _ | ⟨b, _ | ⟨c, _ | ⟨d, _ | ⟨e, l⟩⟩⟩⟩⟩ <;>
+      simp [alloc.vec.Vec.len, alloc.vec.Vec.index_usize, hl, usize_lit4, lit_iff]
+    all_goals (split_ifs <;> simp only [WP.spec_ok, Option.map_some, Option.map_none] <;> simp_all [UScalar.eq_equiv])
+  · have hb : (bit != 0#u8) = true := by simp [hb0]
+    simp only [hb, ite_true]
+    have hv : bit.val ≠ 0 := by simpa [UScalar.eq_equiv] using hb0
+    simp [hv]
 
 end FaclCore.decide

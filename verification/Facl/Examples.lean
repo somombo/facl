@@ -66,4 +66,46 @@ def edges : List UInt8 := [0x7F, 0x80, 0xBF, 0xC0]
 #guard (bytesIn 0xF0 0xF5).all fun a => (bytesIn 0x7F 0xC0).all fun b =>
   edges.all fun c => edges.all fun d => agrees [a, b, c, d]
 
+#guard [("get", some 1), ("GET", some 1), ("Head", some 2), ("options", some 4), ("post", some 8),
+  ("PUT", some 16), ("patch", some 32), ("DELETE", some 64), ("read", some 7), ("Read", some 7),
+  ("WRITE", some 120), ("gets", none), ("rea", none), ("", none), ("connect", none)].all
+  fun (s, bits) => actionBits (utf8 s) == bits
+
+/-- A toy condition compiler: a condition names a capture, and compiles to its slot. -/
+def toyCompile : Option String → List String → Except LowerError (Option Nat)
+  | none, _ => .ok none
+  | some n, names => match names.idxOf? n with
+    | some i => .ok (some i)
+    | none => .error .unknownIdentifier
+
+def low (blocks : List (Match String String)) := lower ["request", "context"] toyCompile ⟨blocks⟩
+def allowIf (methods : Nat) (cond : String) : Item String String := .allow ⟨methods, some cond⟩
+def allowAll (methods : Nat) : Item String String := .allow ⟨methods, none⟩
+
+/-- `match /users/{uid} { allow read; match /files/{p=**} { allow write: if uid; allow get: if p } }` -/
+def users : Match String String :=
+  .mk [.lit "users", .var "uid"]
+    [allowAll 7, .nested (.mk [.lit "files", .rest "p"] [allowIf 120 "uid", allowIf 1 "p"])]
+
+#guard (low [users]).toOption == some ⟨[
+  ⟨⟨[.lit "users", .var], false⟩, [⟨7, none⟩]⟩,
+  ⟨⟨[.lit "users", .var, .lit "files"], true⟩, [⟨120, some 0⟩, ⟨1, some 1⟩]⟩]⟩
+#guard (low [.mk [.lit "a"] [.nested (.mk [.lit "b"] [allowAll 1])]]).toOption ==
+  some ⟨[⟨⟨[.lit "a", .lit "b"], false⟩, [⟨1, none⟩]⟩]⟩
+#guard (low [.mk [.lit "a"] []]).toOption == some ⟨[]⟩
+#guard low [.mk [.rest "p", .lit "x"] [allowAll 1]] matches .error .restNotLast
+#guard low [.mk [.rest "p"] [allowAll 1, .nested (.mk [] [])]] matches .error .restWithChildren
+#guard low [.mk [.rest "p"] [allowIf 1 "zz", .nested (.mk [] [])]] matches .error .unknownIdentifier
+#guard low [.mk [.var "request"] []] matches .error .reservedCaptureName
+#guard low [.mk [.var "context", .var "context"] []] matches .error .reservedCaptureName
+#guard low [.mk [.var "a"] [.nested (.mk [.var "a"] [])]] matches .error .duplicateCapture
+#guard low [.mk [.lit "a"] [allowIf 1 "x"], .mk [.var "q"] []] matches .error .unknownIdentifier
+
+def nest : Nat → Match String String
+  | 0 => .mk [] [allowAll 1]
+  | n + 1 => .mk [] [.nested (nest n)]
+
+#guard (low [nest 63]).toOption == some ⟨[⟨⟨[], false⟩, [⟨1, none⟩]⟩]⟩
+#guard low [nest 64] matches .error .tooDeep
+
 end Facl
