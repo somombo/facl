@@ -2,7 +2,7 @@
 
 facl protects an HTTP API with a rules file in the style of Firebase Security Rules. Each `match` block names a URL pattern, and each `allow` statement grants HTTP methods when its condition, written in a small subset of CEL, is true. Any matching allow grants access; if nothing matches, the request is denied, and an erroring condition never grants.
 
-All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4. Rule compilation, and every step from a raw request path and method to the decision, are proven against a Lean spec, with conditions abstracted: compilation holds for any condition compiler, and the decision for any condition evaluator. That covers flattening nested matches, path matching, method filtering, rule combination and the deny reasons; see [verification/](verification/README.md). The parser, and the CEL compiler and evaluator for conditions, are tested but not proven yet. `verification/check.sh` checks them end to end: it confirms the Lean code is what Aeneas generates from the Rust, then has `lake comparator` check the proofs in a sandbox. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype.
+All decision logic lives in `facl-core`, a small `no_std` engine written in the Rust subset that Aeneas can extract to Lean 4. Rule compilation, and every step from a raw request path and method to the decision, are proven against a Lean spec, with conditions abstracted: compilation holds for any condition compiler, and the decision for any condition evaluator. That covers flattening nested matches, path matching, method filtering, rule combination and the deny reasons; see [verification/](verification/README.md). The parser and the CEL compiler and evaluator are not proven; differential testing compares them with the Lean spec instead. `verification/check.sh` confirms the Lean extraction matches the Rust and runs `lake comparator` to check the refinement proofs in a sandbox. v0.3 is a Rust rewrite of the unmaintained 0.2.x JavaScript prototype.
 
 ## Example
 
@@ -56,7 +56,16 @@ cargo fmt --all --check
 cargo build -p facl-core --target wasm32-unknown-unknown   # rustup target add wasm32-unknown-unknown
 ```
 
-The shared conformance cases live in `conformance/` as `NAME.rules` plus `NAME.cases.json` pairs; `crates/facl/tests/conformance.rs` runs every pair.
+The shared conformance cases live in `conformance/` as `NAME.rules` plus `NAME.cases.json` pairs. The Rust and npm suites run them.
+
+Differential testing covers what the proofs leave out: the parser, the checker, the CEL compiler and evaluator, and how request facts become CEL values. It compares the Rust with the Lean spec on generated policies and requests:
+
+```sh
+(cd verification && lake build facl-oracle)
+cargo run --release -p facl-difftest -- --oracle verification/.lake/build/bin/facl-oracle --cases 102000 --seed 20261119
+```
+
+[verification/README.md](verification/README.md#differential-testing) describes the other modes and how to replay a failure.
 
 ## JavaScript
 

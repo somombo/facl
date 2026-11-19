@@ -80,3 +80,12 @@ jobs:
           use-mathlib-cache: true
       - name: Check the extraction, then the proofs with lake comparator
         run: verification/check.sh --paranoid
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Compare Rust policies with the Lean oracle
+        timeout-minutes: 3
+        run: |
+          (cd verification && lake build facl-oracle --wfail)
+          seed=$(od -An -N8 -tu8 /dev/urandom | tr -d '[:space:]')
+          cargo run --locked --release -p facl-difftest -- \
+            --oracle verification/.lake/build/bin/facl-oracle --cases 5000 --seed "$seed"

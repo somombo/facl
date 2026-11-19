@@ -45,6 +45,16 @@ name = "facl-core"
 version = "0.3.0"
 
 [[package]]
+name = "facl-difftest"
+version = "0.3.0"
+dependencies = [
+ "facl",
+ "facl-core",
+ "facl-syntax",
+ "serde_json",
+]
+
+[[package]]
 name = "facl-syntax"
 version = "0.3.0"
 dependencies = [

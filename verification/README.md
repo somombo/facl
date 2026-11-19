@@ -38,6 +38,42 @@ Theorems about paths ([Facl/PathTheorems.lean](Facl/PathTheorems.lean)):
 - `utf8Valid_iff`: the Table 3-7 check accepts exactly the bytes Lean's `ByteArray.IsValidUTF8` accepts, the definition behind Lean's `String`.
 - `canonicalize_segment`: every segment `canonicalize` returns is non-empty, is not `.` or `..`, contains no `/` or NUL byte, and is valid UTF-8.
 
+## Differential testing
+
+[Facl/Cel.lean](Facl/Cel.lean) specifies the CEL subset:
+- values and errors
+- which conditions compile
+- how a condition evaluates against the request facts and captures
+- the `request.is()` Content-Type check
+
+Its `#guard` examples run in the default build. The oracle,
+[Oracle/Main.lean](Oracle/Main.lean), combines it with the spec's lowering,
+path canonicalization and decision, the same composition as
+`evaluate_with_spec`. It reads cases as JSON Lines and prints the spec's verdicts.
+
+`crates/facl-difftest` generates policies and requests from a seed. It prints
+each policy as rules text, and checks that parsing the text gives back the
+generated tree, ignoring spans. It then runs each case through the public Rust
+API and through the oracle, comparing the compile outcome and every verdict.
+On a disagreement it prints the seed, the case and both results, then shrinks
+the case while the disagreement remains.
+
+From the repository root:
+
+```sh
+(cd verification && lake build facl-oracle)
+cargo run --release -p facl-difftest -- \
+  --oracle verification/.lake/build/bin/facl-oracle --cases 102000 --seed 20261119
+```
+
+Other modes:
+- `--conformance-only` runs the shared conformance cases through the oracle.
+- `--round-trip-only` exercises only the generator, printer and parser.
+- `--replay case.json` reruns a saved case.
+
+CI runs 5,000 cases with a fresh seed after the proof check. The wire format
+is documented in [the runner source](../crates/facl-difftest/src/wire.rs).
+
 ## Refinement proofs
 
 Each theorem below is about the code Aeneas generated from the Rust. Each proves

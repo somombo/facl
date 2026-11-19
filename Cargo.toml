@@ -6,6 +6,7 @@ members = [
     "crates/facl-check",
     "crates/facl",
     "crates/facl-cli",
+    "crates/facl-difftest",
     "crates/facl-wasm",
 ]
 

@@ -1,0 +1,14 @@
+[package]
+name = "facl-difftest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+facl.workspace = true
+facl-core.workspace = true
+facl-syntax.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
