@@ -181,6 +181,27 @@ structure ir.Rule (C : Type _) where
 structure ir.Policy (C : Type _) where
   rules : alloc.vec.Vec (ir.Rule C)
 
+/-- Trait declaration: [facl_core::decide::PrepareConditions]
+    Source: 'crates/facl-core/src/decide.rs', lines 306:0-309:1
+    Visibility: public -/
+structure decide.PrepareConditions (Self : Type _) (C : Type _) (E : Type _) (X
+  : Type _) where
+  prepare : Self → Slice (alloc.vec.Vec Std.U8) → Result
+    (core.result.Result E X)
+
+/-- [facl_core::path::PathError]
+    Source: 'crates/facl-core/src/path.rs', lines 13:0-29:1
+    Visibility: public -/
+@[discriminant isize]
+inductive path.PathError where
+| NoLeadingSlash : path.PathError
+| QueryOrFragment : path.PathError
+| EmptySegment : path.PathError
+| BadPercentEncoding : path.PathError
+| DotSegment : path.PathError
+| ForbiddenByte : path.PathError
+| InvalidUtf8 : path.PathError
+
 /-- [facl_core::lower::LowerErrorKind]
     Source: 'crates/facl-core/src/lower.rs', lines 20:0-39:1
     Visibility: public -/
@@ -209,18 +230,5 @@ structure lower.LowerError where
 structure lower.CompileCond (Self : Type _) (E : Type _) (C : Type _) where
   compile : Self → Option E → Slice (alloc.vec.Vec Std.U8) → Result
     (core.result.Result C lower.LowerError)
-
-/-- [facl_core::path::PathError]
-    Source: 'crates/facl-core/src/path.rs', lines 13:0-29:1
-    Visibility: public -/
-@[discriminant isize]
-inductive path.PathError where
-| NoLeadingSlash : path.PathError
-| QueryOrFragment : path.PathError
-| EmptySegment : path.PathError
-| BadPercentEncoding : path.PathError
-| DotSegment : path.PathError
-| ForbiddenByte : path.PathError
-| InvalidUtf8 : path.PathError
 
 end FaclCore

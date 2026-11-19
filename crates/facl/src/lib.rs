@@ -13,7 +13,10 @@ pub use diagnostic::{Diagnostic, Severity};
 pub use facl_core::{Decision, DenyReason, Footprint};
 pub use facts::{FactsError, RequestFacts, decision_to_json, reason_name};
 
-use facl_core::{Request, canonicalize, decide, footprint, lower, method_bit};
+use facl_core::{
+    CExpr, Capture, Conditions, HostConditions, Outcome, PrepareConditions, Value, evaluate_with,
+    footprint, lower,
+};
 
 /// A compiled policy, ready to evaluate requests.
 #[derive(Clone, Debug)]
@@ -67,16 +70,38 @@ impl Policy {
     /// [`DenyReason::BadRequestPath`]. An error means the facts themselves
     /// are unusable; adapters must treat it as a denial.
     pub fn evaluate(&self, facts: &RequestFacts) -> Result<Decision, FactsError> {
-        let path = match canonicalize(facts.path.as_bytes()) {
-            Ok(path) => path,
-            Err(_) => return Ok(Decision::Deny(DenyReason::BadRequestPath)),
-        };
-        let request = Request {
-            method: method_bit(facts.method.as_bytes()),
-            request: facts.request_value(&path)?,
-            context: facts.context_value()?,
-            path,
-        };
-        Ok(decide(&self.ir, &request, &host::FaclHost))
+        evaluate_with(
+            &self.ir,
+            facts.method.as_bytes(),
+            facts.path.as_bytes(),
+            &Prepare(facts),
+        )
+    }
+}
+
+struct Prepare<'a>(&'a RequestFacts);
+
+struct Prepared {
+    request: Value,
+    context: Value,
+}
+
+impl PrepareConditions<CExpr, Prepared, FactsError> for Prepare<'_> {
+    fn prepare(&self, segments: &[Vec<u8>]) -> Result<Prepared, FactsError> {
+        Ok(Prepared {
+            request: self.0.request_value(segments)?,
+            context: self.0.context_value()?,
+        })
+    }
+}
+
+impl Conditions<CExpr> for Prepared {
+    fn outcome(&self, cond: &CExpr, captures: &[Capture]) -> Outcome {
+        HostConditions {
+            host: &host::FaclHost,
+            request: &self.request,
+            context: &self.context,
+        }
+        .outcome(cond, captures)
     }
 }

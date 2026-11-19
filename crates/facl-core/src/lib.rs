@@ -35,8 +35,8 @@ pub mod value;
 
 pub use ast::*;
 pub use decide::{
-    Conditions, Decision, DenyReason, HostConditions, Outcome, Request, Verdict, action_bits,
-    combine, decide, decide_with, method_bit,
+    Conditions, Decision, DenyReason, HostConditions, Outcome, PrepareConditions, Request, Verdict,
+    action_bits, combine, decide, decide_with, evaluate_with, method_bit,
 };
 pub use eval::{Env, Host, eval};
 pub use footprint::{Footprint, footprint};

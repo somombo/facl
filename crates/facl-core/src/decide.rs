@@ -2,7 +2,7 @@
 
 use crate::eval::{Env, Host, eval};
 use crate::ir::{CExpr, Policy, Rule};
-use crate::path::{Capture, match_pattern};
+use crate::path::{Capture, canonicalize, match_pattern};
 use crate::value::Value;
 use alloc::vec::Vec;
 
@@ -300,4 +300,27 @@ pub fn decide<H: Host>(p: &Policy, r: &Request, host: &H) -> Decision {
         context: &r.context,
     };
     decide_with(p, r.method, &r.path, &conds)
+}
+
+/// Builds the condition evaluator for a request once its path is canonical.
+pub trait PrepareConditions<C, E, X> {
+    /// The evaluator for a request with these canonical path segments.
+    fn prepare(&self, segments: &[Vec<u8>]) -> Result<E, X>;
+}
+
+/// Decides a request from its raw method name and path. A path that cannot be
+/// canonicalized is denied with `BadRequestPath`. Otherwise the conditions are
+/// prepared and `decide_with` runs with the method's bit.
+pub fn evaluate_with<C, E: Conditions<C>, X, P: PrepareConditions<C, E, X>>(
+    p: &Policy<C>,
+    method: &[u8],
+    raw_path: &[u8],
+    prep: &P,
+) -> Result<Decision, X> {
+    let segments = match canonicalize(raw_path) {
+        Ok(segments) => segments,
+        Err(_) => return Ok(Decision::Deny(DenyReason::BadRequestPath)),
+    };
+    let conds = prep.prepare(&segments)?;
+    Ok(decide_with(p, method_bit(method), &segments, &conds))
 }
