@@ -1,4 +1,5 @@
 import Facl.Spec
+import Facl.Cel
 import Facl.Theorems
 import Facl.Examples
 import Facl.Lift

@@ -16,3 +16,7 @@ globs = ["FaclCore.+"]
 # Proved with `sorry` for lake comparator, so never a default target.
 [[lean_lib]]
 name = "Challenge"
+
+[[lean_exe]]
+name = "facl-oracle"
+root = "Oracle.Main"
