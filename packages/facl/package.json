@@ -35,6 +35,7 @@
     "build": "cargo build --release --target wasm32-unknown-unknown -p facl-wasm && wasm-bindgen --target web --out-dir wasm ../../target/wasm32-unknown-unknown/release/facl_wasm.wasm",
     "test": "node --test \"test/*.test.js\"",
     "prepublishOnly": "npm run build && npm test",
+    "bench": "node bench/bench.js",
     "example": "node examples/server.js"
   },
   "peerDependencies": {

@@ -91,6 +91,20 @@ app.use("*", facl(policy, { auth: verifyJwt }));
   - Deno, with `--allow-read` so it can load the wasm file.
   - Cloudflare Workers. Wrangler resolves the package's `workerd` export, which imports the wasm as a module, so no configuration is needed.
 
+## Performance
+
+Each time below is per request: the median of 15 batches on an Intel Core i5-7260U (2.2 GHz), with Rust 1.99 and Node 24, measured on 2026-11-19.
+
+| Request | Native engine | JS `policy.evaluate` | JS `authorize` |
+| --- | --- | --- | --- |
+| Public read | 0.9 µs | 4.4 µs | 5.1 µs |
+| Owner write, one condition | 1.5 µs | 5.8 µs | 6.9 µs |
+| No matching rule | 0.3 µs | 3.5 µs | 4.3 µs |
+| Path rejected by canonicalization | 0.06 µs | 2.9 µs | 3.7 µs |
+| 100 rules, the last one matching | 1.9 µs | 6.6 µs | 7.8 µs |
+
+From JS, most of the time is the JSON round trip into and out of wasm, about 3 µs per request. Compiling the example policy above takes 15 µs natively and 27 µs through wasm. To reproduce, run `cargo run --release -p facl --example bench`, and `npm run build && npm run bench` in `packages/facl`.
+
 ## License
 
 Copyright 2026 Chisomo Makombo Sakala. Licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE). The 0.2.x JavaScript prototype in this repository's history was released under the MIT License.

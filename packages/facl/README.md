@@ -49,6 +49,7 @@ const { allowed, reason } = await authorize(policy, request, {
 - **Failures deny.** Bad facts, a throwing verifier or a wasm trap all deny the request, with the reason `internal_error`.
 - **Footprint.** `policy.footprint` lists what the policy reads: `headers`, `auth` and `context`. `authorize` gathers only those, so a policy that never reads `request.auth` never calls your verifier.
 - **CORS.** Browsers send preflight `OPTIONS` requests without credentials, and `read` includes `OPTIONS`. Answer preflights with CORS middleware registered before facl.
+- **Speed.** A decision takes about 3 to 8 µs from JS on a 2.2 GHz laptop CPU, mostly the JSON round trip into wasm. The repository README has the breakdown and how to measure it.
 - **Large integers.** JavaScript numbers lose precision beyond 2^53. Pass such values in `context` with `JSON.rawJSON("...")`.
 - **Runtimes.**
   - Node 20 or later, and Bun.
