@@ -389,7 +389,11 @@ impl Parser<'_> {
         }
         let cond = if self.eat(":")? {
             self.keyword("if")?;
-            Some(self.parse_expr()?)
+            // Matches and expressions are limited separately, so a condition starts afresh.
+            let matches = core::mem::replace(&mut self.depth, 0);
+            let e = self.parse_expr()?;
+            self.depth = matches;
+            Some(e)
         } else {
             None
         };

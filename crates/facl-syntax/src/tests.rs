@@ -494,11 +494,10 @@ fn spans_cover_the_text() {
 #[test]
 fn nesting_limits() {
     let nested_parens = |n: usize| format!("{}1{}", "(".repeat(n), ")".repeat(n));
-    // The service, match and allow use some of the budget.
     assert!(
         parse(&format!(
             "service http {{ match /a {{ allow read: if {}; }} }}",
-            nested_parens(60)
+            nested_parens(63)
         ))
         .is_ok()
     );
@@ -514,6 +513,14 @@ fn nesting_limits() {
         )
     };
     assert!(parse(&matches(64)).is_ok());
+    // A condition has its own budget, however deep its match is.
+    let deep_allow = format!(
+        "service http {{ {}allow read: if {};{} }}",
+        "match /a { ".repeat(64),
+        nested_parens(63),
+        " }".repeat(64)
+    );
+    assert!(parse(&deep_allow).is_ok());
     assert!(
         parse(&matches(65))
             .expect_err("too deep")
