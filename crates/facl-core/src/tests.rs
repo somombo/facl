@@ -815,6 +815,32 @@ mod decide_tests {
     }
 
     #[test]
+    fn action_names() {
+        let table = [
+            ("get", 1),
+            ("head", 2),
+            ("options", 4),
+            ("post", 8),
+            ("put", 16),
+            ("patch", 32),
+            ("delete", 64),
+            ("read", 7),
+            ("write", 120),
+        ];
+        for (name, bits) in table {
+            assert_eq!(action_bits(name.as_bytes()), Some(bits), "{name}");
+            assert_eq!(
+                action_bits(name.to_ascii_uppercase().as_bytes()),
+                Some(bits)
+            );
+        }
+        assert_eq!(action_bits(b"GeT"), Some(1));
+        for other in ["", "trace", "gets", "ge", "writes", "@et", "reaD "] {
+            assert_eq!(action_bits(other.as_bytes()), None, "{other:?}");
+        }
+    }
+
+    #[test]
     fn default_is_deny_with_no_matching_rule() {
         let empty = Policy { rules: vec![] };
         assert_eq!(

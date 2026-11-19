@@ -198,7 +198,7 @@ pub enum Capture {
 }
 
 /// Copies a byte string.
-fn copy_bytes(s: &[u8]) -> Vec<u8> {
+pub(crate) fn copy_bytes(s: &[u8]) -> Vec<u8> {
     let mut out = Vec::new();
     let mut i = 0;
     while i < s.len() {

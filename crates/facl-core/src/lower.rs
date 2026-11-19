@@ -4,8 +4,9 @@
 //! checks that the engine relies on, as defence in depth, and stops at the
 //! first problem.
 
-use crate::ast::{Allow, Expr, ExprKind, Item, Match, PatSeg, Service, Span};
+use crate::ast::{Expr, ExprKind, Item, Match, PatSeg, Service, Span};
 use crate::ir::{CExpr, CompiledAllow, Pattern, Policy, Rule, Seg};
+use crate::path::copy_bytes;
 use crate::value::{Value, bytes_eq};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -50,79 +51,186 @@ fn fail<T>(kind: LowerErrorKind, span: &Span) -> Result<T, LowerError> {
     Err(LowerError { kind, span: *span })
 }
 
+/// Compiles the condition of one allow. `lower_with` calls it for each allow
+/// with the captures in scope.
+pub trait CompileCond<E, C> {
+    /// Compiles `cond`, where `names` are the capture names in scope.
+    fn compile(&self, cond: &Option<E>, names: &[Vec<u8>]) -> Result<C, LowerError>;
+}
+
+struct ExprCompiler;
+
+impl CompileCond<Expr, CExpr> for ExprCompiler {
+    fn compile(&self, cond: &Option<Expr>, names: &[Vec<u8>]) -> Result<CExpr, LowerError> {
+        match cond {
+            Some(e) => lower_expr(e, names, 1),
+            None => Ok(CExpr::Lit(Value::Bool(true))),
+        }
+    }
+}
+
 /// Lowers a service to a policy, returning the first error found.
 pub fn lower(service: &Service) -> Result<Policy, LowerError> {
+    lower_with(service, &ExprCompiler)
+}
+
+/// Lowers the structure of a service, compiling conditions with `k`.
+pub fn lower_with<E, C, K: CompileCond<E, C>>(
+    service: &Service<E>,
+    k: &K,
+) -> Result<Policy<C>, LowerError> {
     let mut rules = Vec::new();
     let mut i = 0;
     while i < service.matches.len() {
-        lower_match(&service.matches[i], &[], &[], 1, &mut rules)?;
+        rules = lower_match(&service.matches[i], &[], &[], 1, k, rules)?;
         i += 1;
     }
     Ok(Policy { rules })
 }
 
-/// Lowers one match and, after it, its nested matches (source pre-order).
-fn lower_match(
-    m: &Match,
-    parent_segs: &[Seg],
-    parent_names: &[Vec<u8>],
-    depth: u32,
-    rules: &mut Vec<Rule>,
-) -> Result<(), LowerError> {
-    if depth > MAX_DEPTH {
-        return fail(LowerErrorKind::TooDeep, &m.span);
-    }
-    let mut segs = parent_segs.to_vec();
-    let mut names = parent_names.to_vec();
-    let rest = lower_pattern(m, &mut segs, &mut names)?;
-    let mut allows = Vec::new();
+fn copy_segs(segs: &[Seg]) -> Vec<Seg> {
+    let mut out = Vec::new();
     let mut i = 0;
-    while i < m.body.len() {
-        match &m.body[i] {
-            Item::Allow(a) => allows.push(lower_allow(a, &names)?),
-            Item::Match(_) if rest => return fail(LowerErrorKind::RestWithChildren, &m.span),
-            Item::Match(_) => {}
+    while i < segs.len() {
+        match &segs[i] {
+            Seg::Lit(s) => out.push(Seg::Lit(copy_bytes(s))),
+            Seg::Var => out.push(Seg::Var),
         }
         i += 1;
     }
+    out
+}
+
+fn copy_names(names: &[Vec<u8>]) -> Vec<Vec<u8>> {
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < names.len() {
+        out.push(copy_bytes(&names[i]));
+        i += 1;
+    }
+    out
+}
+
+/// Lowers one match and, after it, its nested matches (source pre-order).
+fn lower_match<E, C, K: CompileCond<E, C>>(
+    m: &Match<E>,
+    parent_segs: &[Seg],
+    parent_names: &[Vec<u8>],
+    depth: u32,
+    k: &K,
+    rules: Vec<Rule<C>>,
+) -> Result<Vec<Rule<C>>, LowerError> {
+    if depth > MAX_DEPTH {
+        return fail(LowerErrorKind::TooDeep, &m.span);
+    }
+    let mut segs = copy_segs(parent_segs);
+    let mut names = copy_names(parent_names);
+    let rest = lower_pattern(&m.pattern, &m.span, &mut segs, &mut names)?;
+    let allows = lower_allows(m, rest, &names, k)?;
+    let mut rules = rules;
     if !allows.is_empty() {
         let pattern = Pattern {
-            segs: segs.clone(),
+            segs: copy_segs(&segs),
             rest,
         };
         rules.push(Rule { pattern, allows });
     }
-    let mut k = 0;
-    while k < m.body.len() {
-        if let Item::Match(child) = &m.body[k] {
-            lower_match(child, &segs, &names, depth + 1, rules)?;
-        }
-        k += 1;
-    }
-    Ok(())
+    lower_children(m, &segs, &names, depth, k, rules)
 }
 
-/// Appends the match's segments and capture names; returns whether it ends in
-/// a rest capture.
+/// Compiles the allows of a match in source order.
+fn lower_allows<E, C, K: CompileCond<E, C>>(
+    m: &Match<E>,
+    rest: bool,
+    names: &[Vec<u8>],
+    k: &K,
+) -> Result<Vec<CompiledAllow<C>>, LowerError> {
+    let mut allows = Vec::new();
+    let mut i = 0;
+    while i < m.body.len() {
+        allows = lower_allow_item(&m.body[i], &m.span, rest, names, k, allows)?;
+        i += 1;
+    }
+    Ok(allows)
+}
+
+fn lower_allow_item<E, C, K: CompileCond<E, C>>(
+    item: &Item<E>,
+    span: &Span,
+    rest: bool,
+    names: &[Vec<u8>],
+    k: &K,
+    allows: Vec<CompiledAllow<C>>,
+) -> Result<Vec<CompiledAllow<C>>, LowerError> {
+    let mut allows = allows;
+    match item {
+        Item::Allow(a) => {
+            let cond = k.compile(&a.cond, names)?;
+            allows.push(CompiledAllow {
+                methods: a.methods,
+                cond,
+            });
+            Ok(allows)
+        }
+        Item::Match(_) if rest => fail(LowerErrorKind::RestWithChildren, span),
+        Item::Match(_) => Ok(allows),
+    }
+}
+
+/// Lowers the nested matches of a match in source order.
+fn lower_children<E, C, K: CompileCond<E, C>>(
+    m: &Match<E>,
+    segs: &[Seg],
+    names: &[Vec<u8>],
+    depth: u32,
+    k: &K,
+    rules: Vec<Rule<C>>,
+) -> Result<Vec<Rule<C>>, LowerError> {
+    let mut rules = rules;
+    let mut i = 0;
+    while i < m.body.len() {
+        rules = lower_child(&m.body[i], segs, names, depth, k, rules)?;
+        i += 1;
+    }
+    Ok(rules)
+}
+
+fn lower_child<E, C, K: CompileCond<E, C>>(
+    item: &Item<E>,
+    segs: &[Seg],
+    names: &[Vec<u8>],
+    depth: u32,
+    k: &K,
+    rules: Vec<Rule<C>>,
+) -> Result<Vec<Rule<C>>, LowerError> {
+    match item {
+        Item::Match(child) => lower_match(child, segs, names, depth + 1, k, rules),
+        Item::Allow(_) => Ok(rules),
+    }
+}
+
+/// Appends the pattern's segments and capture names; returns whether it ends
+/// in a rest capture.
 fn lower_pattern(
-    m: &Match,
+    pattern: &[PatSeg],
+    span: &Span,
     segs: &mut Vec<Seg>,
     names: &mut Vec<Vec<u8>>,
 ) -> Result<bool, LowerError> {
     let mut rest = false;
     let mut i = 0;
-    while i < m.pattern.len() {
-        match &m.pattern[i] {
-            PatSeg::Lit(s) => segs.push(Seg::Lit(s.clone())),
+    while i < pattern.len() {
+        match &pattern[i] {
+            PatSeg::Lit(s) => segs.push(Seg::Lit(copy_bytes(s))),
             PatSeg::Var(n) => {
-                bind(names, n, &m.span)?;
+                bind(names, n, span)?;
                 segs.push(Seg::Var);
             }
             PatSeg::Rest(n) => {
-                if i + 1 != m.pattern.len() {
-                    return fail(LowerErrorKind::RestNotLast, &m.span);
+                if i + 1 != pattern.len() {
+                    return fail(LowerErrorKind::RestNotLast, span);
                 }
-                bind(names, n, &m.span)?;
+                bind(names, n, span)?;
                 rest = true;
             }
         }
@@ -131,15 +239,34 @@ fn lower_pattern(
     Ok(rest)
 }
 
+/// True for the names `request` and `context`.
+fn is_reserved(name: &[u8]) -> bool {
+    name.len() == 7
+        && ((name[0] == b'r'
+            && name[1] == b'e'
+            && name[2] == b'q'
+            && name[3] == b'u'
+            && name[4] == b'e'
+            && name[5] == b's'
+            && name[6] == b't')
+            || (name[0] == b'c'
+                && name[1] == b'o'
+                && name[2] == b'n'
+                && name[3] == b't'
+                && name[4] == b'e'
+                && name[5] == b'x'
+                && name[6] == b't'))
+}
+
 /// Adds a capture name, rejecting reserved and repeated names.
 fn bind(names: &mut Vec<Vec<u8>>, name: &[u8], span: &Span) -> Result<(), LowerError> {
-    if bytes_eq(name, b"request") || bytes_eq(name, b"context") {
+    if is_reserved(name) {
         return fail(LowerErrorKind::ReservedCaptureName, span);
     }
     if slot_of(names, name).is_some() {
         return fail(LowerErrorKind::DuplicateCapture, span);
     }
-    names.push(name.to_vec());
+    names.push(copy_bytes(name));
     Ok(())
 }
 
@@ -152,17 +279,6 @@ fn slot_of(names: &[Vec<u8>], name: &[u8]) -> Option<u32> {
         i += 1;
     }
     None
-}
-
-fn lower_allow(a: &Allow, names: &[Vec<u8>]) -> Result<CompiledAllow, LowerError> {
-    let cond = match &a.cond {
-        Some(e) => lower_expr(e, names, 1)?,
-        None => CExpr::Lit(Value::Bool(true)),
-    };
-    Ok(CompiledAllow {
-        methods: a.methods,
-        cond,
-    })
 }
 
 fn lower_expr(e: &Expr, names: &[Vec<u8>], depth: u32) -> Result<CExpr, LowerError> {

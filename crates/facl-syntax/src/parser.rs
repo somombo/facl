@@ -2,7 +2,7 @@
 //! different character set from expressions.
 
 use crate::MAX_NESTING;
-use facl_core::{Allow, CmpOp, Expr, ExprKind, Item, Match, PatSeg, Service, Span};
+use facl_core::{Allow, CmpOp, Expr, ExprKind, Item, Match, PatSeg, Service, Span, action_bits};
 
 /// A syntax error and where it is.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -83,21 +83,6 @@ fn span(start: usize, end: usize) -> Span {
     Span {
         start: start as u32,
         end: end as u32,
-    }
-}
-
-fn action_bits(name: &str) -> Option<u8> {
-    match name.to_ascii_lowercase().as_str() {
-        "get" => Some(1),
-        "head" => Some(2),
-        "options" => Some(4),
-        "post" => Some(8),
-        "put" => Some(16),
-        "patch" => Some(32),
-        "delete" => Some(64),
-        "read" => Some(7),
-        "write" => Some(120),
-        _ => None,
     }
 }
 
@@ -388,7 +373,7 @@ impl Parser<'_> {
         let mut methods = 0u8;
         loop {
             let (w, sp) = self.word()?;
-            match action_bits(&w) {
+            match action_bits(w.as_bytes()) {
                 Some(bits) => methods |= bits,
                 None => {
                     return self.error(

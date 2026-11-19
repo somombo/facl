@@ -129,6 +129,50 @@ pub fn method_bit(name: &[u8]) -> u8 {
     0
 }
 
+fn ascii_upper(name: &[u8]) -> Vec<u8> {
+    let mut upper = Vec::new();
+    let mut i = 0;
+    while i < name.len() {
+        let b = name[i];
+        upper.push(if b >= b'a' && b - b'a' < 26 {
+            b - 32
+        } else {
+            b
+        });
+        i += 1;
+    }
+    upper
+}
+
+/// Maps an action name in a rules file, ignoring ASCII case, to its method
+/// bits: `get` 1, `head` 2, `options` 4, `post` 8, `put` 16, `patch` 32,
+/// `delete` 64, and the groups `read` 7 and `write` 120.
+pub fn action_bits(name: &[u8]) -> Option<u8> {
+    let upper = ascii_upper(name);
+    let bit = method_bit(&upper);
+    if bit != 0 {
+        return Some(bit);
+    }
+    if upper.len() == 4
+        && upper[0] == b'R'
+        && upper[1] == b'E'
+        && upper[2] == b'A'
+        && upper[3] == b'D'
+    {
+        return Some(7);
+    }
+    if upper.len() == 5
+        && upper[0] == b'W'
+        && upper[1] == b'R'
+        && upper[2] == b'I'
+        && upper[3] == b'T'
+        && upper[4] == b'E'
+    {
+        return Some(120);
+    }
+    None
+}
+
 /// Evaluates the condition of one applicable allow.
 pub trait Conditions<C> {
     /// What `cond` contributes, given the captures of the matched pattern.

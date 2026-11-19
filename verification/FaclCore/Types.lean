@@ -20,6 +20,84 @@ set_option maxRecDepth 2048
 
 namespace FaclCore
 
+/-- [facl_core::ast::Span]
+    Source: 'crates/facl-core/src/ast.rs', lines 9:0-14:1
+    Visibility: public -/
+structure ast.Span where
+  start : Std.U32
+  «end» : Std.U32
+
+/-- [facl_core::ast::Allow]
+    Source: 'crates/facl-core/src/ast.rs', lines 60:0-67:1
+    Visibility: public -/
+structure ast.Allow (E : Type _) where
+  methods : Std.U8
+  cond : Option E
+  span : ast.Span
+
+/-- [facl_core::ast::PatSeg]
+    Source: 'crates/facl-core/src/ast.rs', lines 49:0-56:1
+    Visibility: public -/
+@[discriminant isize]
+inductive ast.PatSeg where
+| Lit : alloc.vec.Vec Std.U8 → ast.PatSeg
+| Var : alloc.vec.Vec Std.U8 → ast.PatSeg
+| Rest : alloc.vec.Vec Std.U8 → ast.PatSeg
+
+mutual
+
+/-- [facl_core::ast::Match]
+    Source: 'crates/facl-core/src/ast.rs', lines 29:0-36:1
+    Visibility: public -/
+inductive ast.Match (E : Type _) where
+| mk :
+  alloc.vec.Vec ast.PatSeg →
+  alloc.vec.Vec (ast.Item E) →
+  ast.Span →
+  ast.Match E
+
+/-- [facl_core::ast::Item]
+    Source: 'crates/facl-core/src/ast.rs', lines 40:0-45:1
+    Visibility: public -/
+@[discriminant isize]
+inductive ast.Item (E : Type _) where
+| Match : ast.Match E → ast.Item E
+| Allow : ast.Allow E → ast.Item E
+
+end
+
+def ast.Match.pattern {E : Type _} (x : ast.Match E) :=
+  match x with | ast.Match.mk x1 _ _ => x1
+
+def ast.Match.body {E : Type _} (x : ast.Match E) :=
+  match x with | ast.Match.mk _ x1 _ => x1
+
+def ast.Match.span {E : Type _} (x : ast.Match E) :=
+  match x with | ast.Match.mk _ _ x1 => x1
+
+@[simp]
+theorem ast.Match.pattern._simpLemma_ {E : Type _} (pattern : alloc.vec.Vec
+  ast.PatSeg) (body : alloc.vec.Vec (ast.Item E)) (span : ast.Span) :
+  (ast.Match.mk pattern body span).pattern = pattern := by rfl
+
+@[simp]
+theorem ast.Match.body._simpLemma_ {E : Type _} (pattern : alloc.vec.Vec
+  ast.PatSeg) (body : alloc.vec.Vec (ast.Item E)) (span : ast.Span) :
+  (ast.Match.mk pattern body span).body = body := by rfl
+
+@[simp]
+theorem ast.Match.span._simpLemma_ {E : Type _} (pattern : alloc.vec.Vec
+  ast.PatSeg) (body : alloc.vec.Vec (ast.Item E)) (span : ast.Span) :
+  (ast.Match.mk pattern body span).span = span := by rfl
+
+/-- [facl_core::ast::Service]
+    Source: 'crates/facl-core/src/ast.rs', lines 18:0-25:1
+    Visibility: public -/
+structure ast.Service (E : Type _) where
+  «name» : alloc.vec.Vec Std.U8
+  «matches» : alloc.vec.Vec (ast.Match E)
+  span : ast.Span
+
 /-- [facl_core::decide::Outcome]
     Source: 'crates/facl-core/src/decide.rs', lines 11:0-16:1
     Visibility: public -/
@@ -63,7 +141,7 @@ inductive path.Capture where
 | Rest : alloc.vec.Vec (alloc.vec.Vec Std.U8) → path.Capture
 
 /-- Trait declaration: [facl_core::decide::Conditions]
-    Source: 'crates/facl-core/src/decide.rs', lines 133:0-136:1
+    Source: 'crates/facl-core/src/decide.rs', lines 177:0-180:1
     Visibility: public -/
 structure decide.Conditions (Self : Type _) (C : Type _) where
   outcome : Self → C → Slice path.Capture → Result decide.Outcome
@@ -102,6 +180,35 @@ structure ir.Rule (C : Type _) where
     Visibility: public -/
 structure ir.Policy (C : Type _) where
   rules : alloc.vec.Vec (ir.Rule C)
+
+/-- [facl_core::lower::LowerErrorKind]
+    Source: 'crates/facl-core/src/lower.rs', lines 20:0-39:1
+    Visibility: public -/
+@[discriminant isize]
+inductive lower.LowerErrorKind where
+| UnknownIdentifier : lower.LowerErrorKind
+| ReservedCaptureName : lower.LowerErrorKind
+| DuplicateCapture : lower.LowerErrorKind
+| RestNotLast : lower.LowerErrorKind
+| RestWithChildren : lower.LowerErrorKind
+| UnknownFunction : lower.LowerErrorKind
+| BadArity : lower.LowerErrorKind
+| BadTarget : lower.LowerErrorKind
+| TooDeep : lower.LowerErrorKind
+
+/-- [facl_core::lower::LowerError]
+    Source: 'crates/facl-core/src/lower.rs', lines 43:0-48:1
+    Visibility: public -/
+structure lower.LowerError where
+  kind : lower.LowerErrorKind
+  span : ast.Span
+
+/-- Trait declaration: [facl_core::lower::CompileCond]
+    Source: 'crates/facl-core/src/lower.rs', lines 56:0-59:1
+    Visibility: public -/
+structure lower.CompileCond (Self : Type _) (E : Type _) (C : Type _) where
+  compile : Self → Option E → Slice (alloc.vec.Vec Std.U8) → Result
+    (core.result.Result C lower.LowerError)
 
 /-- [facl_core::path::PathError]
     Source: 'crates/facl-core/src/path.rs', lines 13:0-29:1

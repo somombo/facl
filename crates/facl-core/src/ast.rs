@@ -15,33 +15,33 @@ pub struct Span {
 
 /// A whole rules file: `service NAME { ... }`.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Service {
+pub struct Service<E = Expr> {
     /// The dotted service name, such as `http`.
     pub name: Vec<u8>,
     /// The top-level `match` blocks.
-    pub matches: Vec<Match>,
+    pub matches: Vec<Match<E>>,
     /// The span of the whole service.
     pub span: Span,
 }
 
 /// A `match` block.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Match {
+pub struct Match<E = Expr> {
     /// The path pattern relative to the parent match.
     pub pattern: Vec<PatSeg>,
     /// The nested matches and allow statements, in source order.
-    pub body: Vec<Item>,
+    pub body: Vec<Item<E>>,
     /// The span of the whole block.
     pub span: Span,
 }
 
 /// Something that can appear inside a `match` block.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Item {
+pub enum Item<E = Expr> {
     /// A nested match.
-    Match(Match),
+    Match(Match<E>),
     /// An allow statement.
-    Allow(Allow),
+    Allow(Allow<E>),
 }
 
 /// One segment of a path pattern.
@@ -57,11 +57,11 @@ pub enum PatSeg {
 
 /// An `allow` statement.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Allow {
+pub struct Allow<E = Expr> {
     /// The granted methods as a bit set; see [`crate::method_bit`].
     pub methods: u8,
     /// The condition; `None` for `allow read;`, which always applies.
-    pub cond: Option<Expr>,
+    pub cond: Option<E>,
     /// The span of the whole statement.
     pub span: Span,
 }

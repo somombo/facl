@@ -259,6 +259,227 @@ def decide.method_bit («name» : Slice Std.U8) : Result Std.U8 := do
             else ok 0#u8
           else ok 0#u8
 
+/-- [facl_core::decide::ascii_upper]: loop 0:
+    Source: 'crates/facl-core/src/decide.rs', lines 135:4-143:5 -/
+@[rust_loop]
+def decide.ascii_upper_loop
+  («name» : Slice Std.U8) (upper : alloc.vec.Vec Std.U8) (i : Std.Usize) :
+  Result (alloc.vec.Vec Std.U8)
+  := do
+  let i1 := Slice.len «name»
+  if i < i1
+  then
+    let b ← Slice.index_usize «name» i
+    if b >= 97#u8
+    then
+      let i2 ← b - 97#u8
+      if i2 < 26#u8
+      then
+        let b1 ← b - 32#u8
+        let upper1 ← alloc.vec.Vec.push upper b1
+        let i3 ← i + 1#usize
+        decide.ascii_upper_loop «name» upper1 i3
+      else
+        let upper1 ← alloc.vec.Vec.push upper b
+        let i3 ← i + 1#usize
+        decide.ascii_upper_loop «name» upper1 i3
+    else
+      let upper1 ← alloc.vec.Vec.push upper b
+      let i2 ← i + 1#usize
+      decide.ascii_upper_loop «name» upper1 i2
+  else ok upper
+partial_fixpoint
+
+/-- [facl_core::decide::ascii_upper]:
+    Source: 'crates/facl-core/src/decide.rs', lines 132:0-145:1 -/
+@[reducible]
+def decide.ascii_upper
+  («name» : Slice Std.U8) : Result (alloc.vec.Vec Std.U8) := do
+  decide.ascii_upper_loop «name» (alloc.vec.Vec.new Std.U8) 0#usize
+
+/-- [facl_core::decide::action_bits]:
+    Source: 'crates/facl-core/src/decide.rs', lines 150:0-174:1
+    Visibility: public -/
+def decide.action_bits («name» : Slice Std.U8) : Result (Option Std.U8) := do
+  let upper ← decide.ascii_upper «name»
+  let s := alloc.vec.Vec.deref upper
+  let bit ← decide.method_bit s
+  if bit != 0#u8
+  then ok (some bit)
+  else
+    let i := alloc.vec.Vec.len upper
+    if i = 4#usize
+    then
+      let i1 ←
+        alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U8)
+          upper 0#usize
+      if i1 = 82#u8
+      then
+        let i2 ←
+          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U8)
+            upper 1#usize
+        if i2 = 69#u8
+        then
+          let i3 ←
+            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U8)
+              upper 2#usize
+          if i3 = 65#u8
+          then
+            let i4 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                Std.U8) upper 3#usize
+            if i4 = 68#u8
+            then ok (some 7#u8)
+            else
+              let i5 := alloc.vec.Vec.len upper
+              if i5 = 5#usize
+              then
+                if i1 = 87#u8
+                then
+                  if i2 = 82#u8
+                  then
+                    if i3 = 73#u8
+                    then
+                      if i4 = 84#u8
+                      then
+                        let i6 ←
+                          alloc.vec.Vec.index
+                            (core.slice.index.SliceIndexUsizeSlice Std.U8)
+                            upper 4#usize
+                        if i6 = 69#u8
+                        then ok (some 120#u8)
+                        else ok none
+                      else ok none
+                    else ok none
+                  else ok none
+                else ok none
+              else ok none
+          else
+            let i4 := alloc.vec.Vec.len upper
+            if i4 = 5#usize
+            then
+              if i1 = 87#u8
+              then
+                if i2 = 82#u8
+                then
+                  if i3 = 73#u8
+                  then
+                    let i5 ←
+                      alloc.vec.Vec.index
+                        (core.slice.index.SliceIndexUsizeSlice Std.U8) upper
+                        3#usize
+                    if i5 = 84#u8
+                    then
+                      let i6 ←
+                        alloc.vec.Vec.index
+                          (core.slice.index.SliceIndexUsizeSlice Std.U8) upper
+                          4#usize
+                      if i6 = 69#u8
+                      then ok (some 120#u8)
+                      else ok none
+                    else ok none
+                  else ok none
+                else ok none
+              else ok none
+            else ok none
+        else
+          let i3 := alloc.vec.Vec.len upper
+          if i3 = 5#usize
+          then
+            if i1 = 87#u8
+            then
+              if i2 = 82#u8
+              then
+                let i4 ←
+                  alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                    Std.U8) upper 2#usize
+                if i4 = 73#u8
+                then
+                  let i5 ←
+                    alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                      Std.U8) upper 3#usize
+                  if i5 = 84#u8
+                  then
+                    let i6 ←
+                      alloc.vec.Vec.index
+                        (core.slice.index.SliceIndexUsizeSlice Std.U8) upper
+                        4#usize
+                    if i6 = 69#u8
+                    then ok (some 120#u8)
+                    else ok none
+                  else ok none
+                else ok none
+              else ok none
+            else ok none
+          else ok none
+      else
+        let i2 := alloc.vec.Vec.len upper
+        if i2 = 5#usize
+        then
+          if i1 = 87#u8
+          then
+            let i3 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                Std.U8) upper 1#usize
+            if i3 = 82#u8
+            then
+              let i4 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                  Std.U8) upper 2#usize
+              if i4 = 73#u8
+              then
+                let i5 ←
+                  alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                    Std.U8) upper 3#usize
+                if i5 = 84#u8
+                then
+                  let i6 ←
+                    alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                      Std.U8) upper 4#usize
+                  if i6 = 69#u8
+                  then ok (some 120#u8)
+                  else ok none
+                else ok none
+              else ok none
+            else ok none
+          else ok none
+        else ok none
+    else
+      let i1 := alloc.vec.Vec.len upper
+      if i1 = 5#usize
+      then
+        let i2 ←
+          alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U8)
+            upper 0#usize
+        if i2 = 87#u8
+        then
+          let i3 ←
+            alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice Std.U8)
+              upper 1#usize
+          if i3 = 82#u8
+          then
+            let i4 ←
+              alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                Std.U8) upper 2#usize
+            if i4 = 73#u8
+            then
+              let i5 ←
+                alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                  Std.U8) upper 3#usize
+              if i5 = 84#u8
+              then
+                let i6 ←
+                  alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice
+                    Std.U8) upper 4#usize
+                if i6 = 69#u8
+                then ok (some 120#u8)
+                else ok none
+              else ok none
+            else ok none
+          else ok none
+        else ok none
+      else ok none
+
 /-- [facl_core::value::bytes_eq]: loop 0:
     Source: 'crates/facl-core/src/value.rs', lines 47:4-54:1
     Visibility: public -/
@@ -400,7 +621,7 @@ def path.match_pattern
       path.Capture) 0#usize
 
 /-- [facl_core::decide::apply_rule]: loop 0:
-    Source: 'crates/facl-core/src/decide.rs', lines 152:4-159:5 -/
+    Source: 'crates/facl-core/src/decide.rs', lines 196:4-203:5 -/
 @[rust_loop]
 def decide.apply_rule_loop
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
@@ -432,7 +653,7 @@ def decide.apply_rule_loop
 partial_fixpoint
 
 /-- [facl_core::decide::apply_rule]:
-    Source: 'crates/facl-core/src/decide.rs', lines 140:0-161:1 -/
+    Source: 'crates/facl-core/src/decide.rs', lines 184:0-205:1 -/
 def decide.apply_rule
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
   (rule : ir.Rule C) (method : Std.U8)
@@ -450,7 +671,7 @@ def decide.apply_rule
     ok (outcomes1, true, applicable)
 
 /-- [facl_core::decide::decide_with]: loop 0:
-    Source: 'crates/facl-core/src/decide.rs', lines 178:4-189:5
+    Source: 'crates/facl-core/src/decide.rs', lines 222:4-233:5
     Visibility: public -/
 @[rust_loop]
 def decide.decide_with_loop
@@ -481,7 +702,7 @@ def decide.decide_with_loop
 partial_fixpoint
 
 /-- [facl_core::decide::decide_with]:
-    Source: 'crates/facl-core/src/decide.rs', lines 168:0-204:1
+    Source: 'crates/facl-core/src/decide.rs', lines 212:0-248:1
     Visibility: public -/
 def decide.decide_with
   {C : Type _} {E : Type _} (ConditionsInst : decide.Conditions E C)
@@ -503,6 +724,620 @@ def decide.decide_with
       then ok (decide.Decision.Deny decide.DenyReason.ConditionsNotMet)
       else ok (decide.Decision.Deny decide.DenyReason.NoAllowForMethod)
     else ok (decide.Decision.Deny decide.DenyReason.NoMatchingRule)
+
+/-- [facl_core::lower::MAX_DEPTH]
+    Source: 'crates/facl-core/src/lower.rs', lines 16:0-16:30
+    Visibility: public -/
+@[global_simps, irreducible] def lower.MAX_DEPTH : Std.U32 := 64#u32
+
+/-- [facl_core::lower::fail]:
+    Source: 'crates/facl-core/src/lower.rs', lines 50:0-52:1 -/
+def lower.fail
+  (T : Type _) (kind : lower.LowerErrorKind) (span : ast.Span) :
+  Result (core.result.Result T lower.LowerError)
+  := do
+  ok (core.result.Result.Err { kind, span })
+
+/-- [facl_core::lower::slot_of]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 275:4-282:1 -/
+@[rust_loop]
+def lower.slot_of_loop
+  (names : Slice (alloc.vec.Vec Std.U8)) («name» : Slice Std.U8)
+  (i : Std.Usize) :
+  Result (Option Std.U32)
+  := do
+  let i1 := Slice.len names
+  if i < i1
+  then
+    let v ← Slice.index_usize names i
+    let s := alloc.vec.Vec.deref v
+    let b ← value.bytes_eq s «name»
+    if b
+    then let i2 ← lift (UScalar.cast .U32 i)
+         ok (some i2)
+    else let i2 ← i + 1#usize
+         lower.slot_of_loop names «name» i2
+  else ok none
+partial_fixpoint
+
+/-- [facl_core::lower::slot_of]:
+    Source: 'crates/facl-core/src/lower.rs', lines 273:0-282:1 -/
+@[reducible]
+def lower.slot_of
+  (names : Slice (alloc.vec.Vec Std.U8)) («name» : Slice Std.U8) :
+  Result (Option Std.U32)
+  := do
+  lower.slot_of_loop names «name» 0#usize
+
+/-- [facl_core::lower::is_reserved]:
+    Source: 'crates/facl-core/src/lower.rs', lines 243:0-259:1 -/
+def lower.is_reserved («name» : Slice Std.U8) : Result Bool := do
+  let i := Slice.len «name»
+  if i = 7#usize
+  then
+    let i1 ← Slice.index_usize «name» 0#usize
+    if i1 = 114#u8
+    then
+      let i2 ← Slice.index_usize «name» 1#usize
+      if i2 = 101#u8
+      then
+        let i3 ← Slice.index_usize «name» 2#usize
+        if i3 = 113#u8
+        then
+          let i4 ← Slice.index_usize «name» 3#usize
+          if i4 = 117#u8
+          then
+            let i5 ← Slice.index_usize «name» 4#usize
+            if i5 = 101#u8
+            then
+              let i6 ← Slice.index_usize «name» 5#usize
+              if i6 = 115#u8
+              then
+                let i7 ← Slice.index_usize «name» 6#usize
+                if i7 = 116#u8
+                then ok true
+                else
+                  if i1 = 99#u8
+                  then
+                    if i2 = 111#u8
+                    then
+                      if i3 = 110#u8
+                      then
+                        if i4 = 116#u8
+                        then
+                          if i5 = 101#u8
+                          then
+                            if i6 = 120#u8
+                            then ok (i7 = 116#u8)
+                            else ok false
+                          else ok false
+                        else ok false
+                      else ok false
+                    else ok false
+                  else ok false
+              else
+                if i1 = 99#u8
+                then
+                  if i2 = 111#u8
+                  then
+                    if i3 = 110#u8
+                    then
+                      if i4 = 116#u8
+                      then
+                        if i5 = 101#u8
+                        then
+                          if i6 = 120#u8
+                          then
+                            let i7 ← Slice.index_usize «name» 6#usize
+                            ok (i7 = 116#u8)
+                          else ok false
+                        else ok false
+                      else ok false
+                    else ok false
+                  else ok false
+                else ok false
+            else
+              if i1 = 99#u8
+              then
+                if i2 = 111#u8
+                then
+                  if i3 = 110#u8
+                  then
+                    if i4 = 116#u8
+                    then
+                      if i5 = 101#u8
+                      then
+                        let i6 ← Slice.index_usize «name» 5#usize
+                        if i6 = 120#u8
+                        then
+                          let i7 ← Slice.index_usize «name» 6#usize
+                          ok (i7 = 116#u8)
+                        else ok false
+                      else ok false
+                    else ok false
+                  else ok false
+                else ok false
+              else ok false
+          else
+            if i1 = 99#u8
+            then
+              if i2 = 111#u8
+              then
+                if i3 = 110#u8
+                then
+                  if i4 = 116#u8
+                  then
+                    let i5 ← Slice.index_usize «name» 4#usize
+                    if i5 = 101#u8
+                    then
+                      let i6 ← Slice.index_usize «name» 5#usize
+                      if i6 = 120#u8
+                      then
+                        let i7 ← Slice.index_usize «name» 6#usize
+                        ok (i7 = 116#u8)
+                      else ok false
+                    else ok false
+                  else ok false
+                else ok false
+              else ok false
+            else ok false
+        else
+          if i1 = 99#u8
+          then
+            if i2 = 111#u8
+            then
+              if i3 = 110#u8
+              then
+                let i4 ← Slice.index_usize «name» 3#usize
+                if i4 = 116#u8
+                then
+                  let i5 ← Slice.index_usize «name» 4#usize
+                  if i5 = 101#u8
+                  then
+                    let i6 ← Slice.index_usize «name» 5#usize
+                    if i6 = 120#u8
+                    then
+                      let i7 ← Slice.index_usize «name» 6#usize
+                      ok (i7 = 116#u8)
+                    else ok false
+                  else ok false
+                else ok false
+              else ok false
+            else ok false
+          else ok false
+      else
+        if i1 = 99#u8
+        then
+          if i2 = 111#u8
+          then
+            let i3 ← Slice.index_usize «name» 2#usize
+            if i3 = 110#u8
+            then
+              let i4 ← Slice.index_usize «name» 3#usize
+              if i4 = 116#u8
+              then
+                let i5 ← Slice.index_usize «name» 4#usize
+                if i5 = 101#u8
+                then
+                  let i6 ← Slice.index_usize «name» 5#usize
+                  if i6 = 120#u8
+                  then
+                    let i7 ← Slice.index_usize «name» 6#usize
+                    ok (i7 = 116#u8)
+                  else ok false
+                else ok false
+              else ok false
+            else ok false
+          else ok false
+        else ok false
+    else
+      if i1 = 99#u8
+      then
+        let i2 ← Slice.index_usize «name» 1#usize
+        if i2 = 111#u8
+        then
+          let i3 ← Slice.index_usize «name» 2#usize
+          if i3 = 110#u8
+          then
+            let i4 ← Slice.index_usize «name» 3#usize
+            if i4 = 116#u8
+            then
+              let i5 ← Slice.index_usize «name» 4#usize
+              if i5 = 101#u8
+              then
+                let i6 ← Slice.index_usize «name» 5#usize
+                if i6 = 120#u8
+                then
+                  let i7 ← Slice.index_usize «name» 6#usize
+                  ok (i7 = 116#u8)
+                else ok false
+              else ok false
+            else ok false
+          else ok false
+        else ok false
+      else ok false
+  else ok false
+
+/-- [facl_core::lower::bind]:
+    Source: 'crates/facl-core/src/lower.rs', lines 262:0-271:1 -/
+def lower.bind
+  (names : alloc.vec.Vec (alloc.vec.Vec Std.U8)) («name» : Slice Std.U8)
+  (span : ast.Span) :
+  Result ((core.result.Result Unit lower.LowerError) × (alloc.vec.Vec
+    (alloc.vec.Vec Std.U8)))
+  := do
+  let b ← lower.is_reserved «name»
+  if b
+  then
+    let r ← lower.fail Unit lower.LowerErrorKind.ReservedCaptureName span
+    ok (r, names)
+  else
+    let s := alloc.vec.Vec.deref names
+    let o ← lower.slot_of s «name»
+    let b1 := core.option.Option.is_some o
+    if b1
+    then
+      let r ← lower.fail Unit lower.LowerErrorKind.DuplicateCapture span
+      ok (r, names)
+    else
+      let v ← path.copy_bytes «name»
+      let names1 ← alloc.vec.Vec.push names v
+      ok (core.result.Result.Ok (), names1)
+
+/-- [facl_core::lower::lower_pattern]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 222:4-240:1 -/
+@[rust_loop]
+def lower.lower_pattern_loop
+  (pattern : Slice ast.PatSeg) (span : ast.Span) (segs : alloc.vec.Vec ir.Seg)
+  (names : alloc.vec.Vec (alloc.vec.Vec Std.U8)) (rest : Bool) (i : Std.Usize)
+  :
+  Result ((core.result.Result Bool lower.LowerError) × (alloc.vec.Vec ir.Seg)
+    × (alloc.vec.Vec (alloc.vec.Vec Std.U8)))
+  := do
+  let i1 := Slice.len pattern
+  if i < i1
+  then
+    let ps ← Slice.index_usize pattern i
+    match ps with
+    | ast.PatSeg.Lit s =>
+      let s1 := alloc.vec.Vec.deref s
+      let v ← path.copy_bytes s1
+      let segs1 ← alloc.vec.Vec.push segs (ir.Seg.Lit v)
+      let i2 ← i + 1#usize
+      lower.lower_pattern_loop pattern span segs1 names rest i2
+    | ast.PatSeg.Var n =>
+      let s := alloc.vec.Vec.deref n
+      let (r, names1) ← lower.bind names s span
+      let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+      match cf with
+      | core.ops.control_flow.ControlFlow.Continue _ =>
+        let segs1 ← alloc.vec.Vec.push segs ir.Seg.Var
+        let i2 ← i + 1#usize
+        lower.lower_pattern_loop pattern span segs1 names1 rest i2
+      | core.ops.control_flow.ControlFlow.Break residual =>
+        let r1 ←
+          core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+            Bool (core.convert.FromSame lower.LowerError) residual
+        ok (r1, segs, names1)
+    | ast.PatSeg.Rest n =>
+      let i2 ← i + 1#usize
+      let i3 := Slice.len pattern
+      if i2 != i3
+      then
+        let r ← lower.fail Bool lower.LowerErrorKind.RestNotLast span
+        ok (r, segs, names)
+      else
+        let s := alloc.vec.Vec.deref n
+        let (r, names1) ← lower.bind names s span
+        let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+        match cf with
+        | core.ops.control_flow.ControlFlow.Continue _ =>
+          lower.lower_pattern_loop pattern span segs names1 true i2
+        | core.ops.control_flow.ControlFlow.Break residual =>
+          let r1 ←
+            core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+              Bool (core.convert.FromSame lower.LowerError) residual
+          ok (r1, segs, names1)
+  else ok (core.result.Result.Ok rest, segs, names)
+partial_fixpoint
+
+/-- [facl_core::lower::lower_pattern]:
+    Source: 'crates/facl-core/src/lower.rs', lines 214:0-240:1 -/
+@[reducible]
+def lower.lower_pattern
+  (pattern : Slice ast.PatSeg) (span : ast.Span) (segs : alloc.vec.Vec ir.Seg)
+  (names : alloc.vec.Vec (alloc.vec.Vec Std.U8)) :
+  Result ((core.result.Result Bool lower.LowerError) × (alloc.vec.Vec ir.Seg)
+    × (alloc.vec.Vec (alloc.vec.Vec Std.U8)))
+  := do
+  lower.lower_pattern_loop pattern span segs names false 0#usize
+
+/-- [facl_core::lower::lower_allow_item]:
+    Source: 'crates/facl-core/src/lower.rs', lines 157:0-178:1 -/
+def lower.lower_allow_item
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (item : ast.Item E) (span : ast.Span) (rest : Bool)
+  (names : Slice (alloc.vec.Vec Std.U8)) (k : K)
+  (allows : alloc.vec.Vec (ir.CompiledAllow C)) :
+  Result (core.result.Result (alloc.vec.Vec (ir.CompiledAllow C))
+    lower.LowerError)
+  := do
+  match item with
+  | ast.Item.Match _ =>
+    if rest
+    then
+      lower.fail (alloc.vec.Vec (ir.CompiledAllow C))
+        lower.LowerErrorKind.RestWithChildren span
+    else ok (core.result.Result.Ok allows)
+  | ast.Item.Allow a =>
+    let r ← CompileCondInst.compile k a.cond names
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let allows1 ←
+        alloc.vec.Vec.push allows ({ methods := a.methods, cond := val } :
+          ir.CompiledAllow C)
+      ok (core.result.Result.Ok allows1)
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec (ir.CompiledAllow C)) (core.convert.FromSame
+        lower.LowerError) residual
+
+/-- [facl_core::lower::lower_allows]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 150:4-155:1 -/
+@[rust_loop]
+def lower.lower_allows_loop
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (m : ast.Match E) (rest : Bool) (names : Slice (alloc.vec.Vec Std.U8))
+  (k : K) (allows : alloc.vec.Vec (ir.CompiledAllow C)) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec (ir.CompiledAllow C))
+    lower.LowerError)
+  := do
+  let i1 := alloc.vec.Vec.len m.body
+  if i < i1
+  then
+    let i2 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice (ast.Item E))
+        m.body i
+    let r ←
+      lower.lower_allow_item CompileCondInst i2 m.span rest names k allows
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let i3 ← i + 1#usize
+      lower.lower_allows_loop CompileCondInst m rest names k val i3
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec (ir.CompiledAllow C)) (core.convert.FromSame
+        lower.LowerError) residual
+  else ok (core.result.Result.Ok allows)
+partial_fixpoint
+
+/-- [facl_core::lower::lower_allows]:
+    Source: 'crates/facl-core/src/lower.rs', lines 142:0-155:1 -/
+@[reducible]
+def lower.lower_allows
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (m : ast.Match E) (rest : Bool) (names : Slice (alloc.vec.Vec Std.U8))
+  (k : K) :
+  Result (core.result.Result (alloc.vec.Vec (ir.CompiledAllow C))
+    lower.LowerError)
+  := do
+  lower.lower_allows_loop CompileCondInst m rest names k (alloc.vec.Vec.new
+    (ir.CompiledAllow C)) 0#usize
+
+/-- [facl_core::lower::copy_names]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 107:4-110:5 -/
+@[rust_loop]
+def lower.copy_names_loop
+  (names : Slice (alloc.vec.Vec Std.U8))
+  (out : alloc.vec.Vec (alloc.vec.Vec Std.U8)) (i : Std.Usize) :
+  Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+  := do
+  let i1 := Slice.len names
+  if i < i1
+  then
+    let v ← Slice.index_usize names i
+    let s := alloc.vec.Vec.deref v
+    let v1 ← path.copy_bytes s
+    let out1 ← alloc.vec.Vec.push out v1
+    let i2 ← i + 1#usize
+    lower.copy_names_loop names out1 i2
+  else ok out
+partial_fixpoint
+
+/-- [facl_core::lower::copy_names]:
+    Source: 'crates/facl-core/src/lower.rs', lines 104:0-112:1 -/
+@[reducible]
+def lower.copy_names
+  (names : Slice (alloc.vec.Vec Std.U8)) :
+  Result (alloc.vec.Vec (alloc.vec.Vec Std.U8))
+  := do
+  lower.copy_names_loop names (alloc.vec.Vec.new (alloc.vec.Vec Std.U8))
+    0#usize
+
+/-- [facl_core::lower::copy_segs]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 94:4-100:5 -/
+@[rust_loop]
+def lower.copy_segs_loop
+  (segs : Slice ir.Seg) (out : alloc.vec.Vec ir.Seg) (i : Std.Usize) :
+  Result (alloc.vec.Vec ir.Seg)
+  := do
+  let i1 := Slice.len segs
+  if i < i1
+  then
+    let s ← Slice.index_usize segs i
+    let out1 ←
+      match s with
+      | ir.Seg.Lit s1 =>
+        do
+        let s2 := alloc.vec.Vec.deref s1
+        let v ← path.copy_bytes s2
+        alloc.vec.Vec.push out (ir.Seg.Lit v)
+      | ir.Seg.Var => alloc.vec.Vec.push out ir.Seg.Var
+    let i2 ← i + 1#usize
+    lower.copy_segs_loop segs out1 i2
+  else ok out
+partial_fixpoint
+
+/-- [facl_core::lower::copy_segs]:
+    Source: 'crates/facl-core/src/lower.rs', lines 91:0-102:1 -/
+@[reducible]
+def lower.copy_segs (segs : Slice ir.Seg) : Result (alloc.vec.Vec ir.Seg) := do
+  lower.copy_segs_loop segs (alloc.vec.Vec.new ir.Seg) 0#usize
+
+mutual
+
+/-- [facl_core::lower::lower_match]:
+    Source: 'crates/facl-core/src/lower.rs', lines 115:0-139:1 -/
+def lower.lower_match
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (m : ast.Match E) (parent_segs : Slice ir.Seg)
+  (parent_names : Slice (alloc.vec.Vec Std.U8)) (depth : Std.U32) (k : K)
+  (rules : alloc.vec.Vec (ir.Rule C)) :
+  Result (core.result.Result (alloc.vec.Vec (ir.Rule C)) lower.LowerError)
+  := do
+  if depth > lower.MAX_DEPTH
+  then
+    lower.fail (alloc.vec.Vec (ir.Rule C)) lower.LowerErrorKind.TooDeep m.span
+  else
+    let segs ← lower.copy_segs parent_segs
+    let names ← lower.copy_names parent_names
+    let s := alloc.vec.Vec.deref m.pattern
+    let (r, segs1, names1) ← lower.lower_pattern s m.span segs names
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let s1 := alloc.vec.Vec.deref names1
+      let r1 ← lower.lower_allows CompileCondInst m val s1 k
+      let cf1 ← core.result.Result.Insts.CoreOpsTry.branch r1
+      match cf1 with
+      | core.ops.control_flow.ControlFlow.Continue val1 =>
+        let b ← alloc.vec.Vec.is_empty val1
+        let rules1 ←
+          if b
+          then ok rules
+          else
+            do
+            let s2 := alloc.vec.Vec.deref segs1
+            let v ← lower.copy_segs s2
+            alloc.vec.Vec.push rules
+              ({ pattern := { segs := v, rest := val }, allows := val1 } :
+              ir.Rule C)
+        let s2 := alloc.vec.Vec.deref segs1
+        let s3 := alloc.vec.Vec.deref names1
+        lower.lower_children CompileCondInst m s2 s3 depth k rules1
+      | core.ops.control_flow.ControlFlow.Break residual =>
+        core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+          (alloc.vec.Vec (ir.Rule C)) (core.convert.FromSame lower.LowerError)
+          residual
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec (ir.Rule C)) (core.convert.FromSame lower.LowerError)
+        residual
+partial_fixpoint
+
+/-- [facl_core::lower::lower_children]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 191:4-196:1 -/
+@[rust_loop]
+def lower.lower_children_loop
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (m : ast.Match E) (segs : Slice ir.Seg)
+  (names : Slice (alloc.vec.Vec Std.U8)) (depth : Std.U32) (k : K)
+  (rules : alloc.vec.Vec (ir.Rule C)) (i : Std.Usize) :
+  Result (core.result.Result (alloc.vec.Vec (ir.Rule C)) lower.LowerError)
+  := do
+  let i1 := alloc.vec.Vec.len m.body
+  if i < i1
+  then
+    let i2 ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice (ast.Item E))
+        m.body i
+    let r ← lower.lower_child CompileCondInst i2 segs names depth k rules
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let i3 ← i + 1#usize
+      lower.lower_children_loop CompileCondInst m segs names depth k val i3
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (alloc.vec.Vec (ir.Rule C)) (core.convert.FromSame lower.LowerError)
+        residual
+  else ok (core.result.Result.Ok rules)
+partial_fixpoint
+
+/-- [facl_core::lower::lower_children]:
+    Source: 'crates/facl-core/src/lower.rs', lines 181:0-196:1 -/
+@[reducible]
+def lower.lower_children
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (m : ast.Match E) (segs : Slice ir.Seg)
+  (names : Slice (alloc.vec.Vec Std.U8)) (depth : Std.U32) (k : K)
+  (rules : alloc.vec.Vec (ir.Rule C)) :
+  Result (core.result.Result (alloc.vec.Vec (ir.Rule C)) lower.LowerError)
+  := do
+  lower.lower_children_loop CompileCondInst m segs names depth k rules 0#usize
+partial_fixpoint
+
+/-- [facl_core::lower::lower_child]:
+    Source: 'crates/facl-core/src/lower.rs', lines 198:0-210:1 -/
+def lower.lower_child
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (item : ast.Item E) (segs : Slice ir.Seg)
+  (names : Slice (alloc.vec.Vec Std.U8)) (depth : Std.U32) (k : K)
+  (rules : alloc.vec.Vec (ir.Rule C)) :
+  Result (core.result.Result (alloc.vec.Vec (ir.Rule C)) lower.LowerError)
+  := do
+  match item with
+  | ast.Item.Match child =>
+    let i ← depth + 1#u32
+    lower.lower_match CompileCondInst child segs names i k rules
+  | ast.Item.Allow _ => ok (core.result.Result.Ok rules)
+partial_fixpoint
+
+end
+
+/-- [facl_core::lower::lower_with]: loop 0:
+    Source: 'crates/facl-core/src/lower.rs', lines 84:4-89:1
+    Visibility: public -/
+@[rust_loop]
+def lower.lower_with_loop
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (service : ast.Service E) (k : K) (rules : alloc.vec.Vec (ir.Rule C))
+  (i : Std.Usize) :
+  Result (core.result.Result (ir.Policy C) lower.LowerError)
+  := do
+  let i1 := alloc.vec.Vec.len service.matches
+  if i < i1
+  then
+    let m ←
+      alloc.vec.Vec.index (core.slice.index.SliceIndexUsizeSlice (ast.Match E))
+        service.matches i
+    let s ← lift (Array.to_slice (Std.Array.empty ir.Seg))
+    let s1 ← lift (Array.to_slice (Std.Array.empty (alloc.vec.Vec Std.U8)))
+    let r ← lower.lower_match CompileCondInst m s s1 1#u32 k rules
+    let cf ← core.result.Result.Insts.CoreOpsTry.branch r
+    match cf with
+    | core.ops.control_flow.ControlFlow.Continue val =>
+      let i2 ← i + 1#usize
+      lower.lower_with_loop CompileCondInst service k val i2
+    | core.ops.control_flow.ControlFlow.Break residual =>
+      core.result.Result.Insts.CoreOpsTry_traitFromResidualResult.from_residual
+        (ir.Policy C) (core.convert.FromSame lower.LowerError) residual
+  else ok (core.result.Result.Ok { rules })
+partial_fixpoint
+
+/-- [facl_core::lower::lower_with]:
+    Source: 'crates/facl-core/src/lower.rs', lines 78:0-89:1
+    Visibility: public -/
+@[reducible]
+def lower.lower_with
+  {E : Type _} {C : Type _} {K : Type _} (CompileCondInst : lower.CompileCond K
+  E C) (service : ast.Service E) (k : K) :
+  Result (core.result.Result (ir.Policy C) lower.LowerError)
+  := do
+  lower.lower_with_loop CompileCondInst service k (alloc.vec.Vec.new (ir.Rule
+    C)) 0#usize
 
 /-- [facl_core::path::tail_ok]: loop 0:
     Source: 'crates/facl-core/src/path.rs', lines 182:4-189:1 -/

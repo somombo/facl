@@ -35,13 +35,13 @@ pub mod value;
 
 pub use ast::*;
 pub use decide::{
-    Conditions, Decision, DenyReason, HostConditions, Outcome, Request, Verdict, combine, decide,
-    decide_with, method_bit,
+    Conditions, Decision, DenyReason, HostConditions, Outcome, Request, Verdict, action_bits,
+    combine, decide, decide_with, method_bit,
 };
 pub use eval::{Env, Host, eval};
 pub use footprint::{Footprint, footprint};
 pub use ir::{CExpr, CompiledAllow, Pattern, Policy, Rule, Seg};
-pub use lower::{LowerError, LowerErrorKind, MAX_DEPTH, lower};
+pub use lower::{CompileCond, LowerError, LowerErrorKind, MAX_DEPTH, lower, lower_with};
 pub use path::{Capture, PathError, canonicalize, match_pattern};
 pub use value::{EvalError, Value, bytes_eq, map_get, value_eq};
 
