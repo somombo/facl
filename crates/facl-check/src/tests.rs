@@ -209,3 +209,18 @@ fn warns_about_matches_that_grant_nothing() {
     assert!(found[0].message.contains("grants nothing"));
     assert!(!has_errors(&found));
 }
+
+#[test]
+fn checker_and_lowering_agree_on_has_depth() {
+    let src = |nots: usize| {
+        format!(
+            "service http {{ match /a {{ allow read: if {}has(context.x); }} }}",
+            "!".repeat(nots)
+        )
+    };
+    for (nots, ok) in [(61, true), (62, false)] {
+        let service = facl_syntax::parse(&src(nots)).expect("parses");
+        assert_eq!(errors(&src(nots)).is_empty(), ok, "checker, {nots}");
+        assert_eq!(facl_core::lower(&service).is_ok(), ok, "lowering, {nots}");
+    }
+}

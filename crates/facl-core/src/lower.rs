@@ -359,9 +359,11 @@ fn lower_call(
         return Ok(CExpr::Size(lower_box(&args[0], names, depth)?));
     }
     match &args[0].kind {
-        ExprKind::Select(target, key) => {
-            Ok(CExpr::Has(lower_box(target, names, depth)?, key.clone()))
-        }
+        // The selection counts toward the depth, as in the checker.
+        ExprKind::Select(target, key) => Ok(CExpr::Has(
+            lower_box(target, names, depth + 1)?,
+            key.clone(),
+        )),
         _ => fail(LowerErrorKind::BadTarget, span),
     }
 }
