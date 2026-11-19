@@ -1,6 +1,6 @@
 # facl verification
 
-This Lean 4 project specifies how facl compiles rules into a policy, reads a request path, matches it and combines rules. It also proves that seven functions extracted from the Rust implement that spec:
+This Lean 4 project specifies how facl compiles rules into a policy, reads a request path, matches it and combines rules. It also proves that eight functions extracted from the Rust implement that spec:
 
 - the structure of rule compilation, `lower_with`
 - the action table, `action_bits`
@@ -9,6 +9,7 @@ This Lean 4 project specifies how facl compiles rules into a policy, reads a req
 - path matching, `match_pattern`
 - the grant combiner, `combine`
 - the decision procedure, `decide_with`
+- the request glue, `evaluate_with`, from the raw path and method to the decision
 
 ## What is specified
 
@@ -53,6 +54,7 @@ spec.
 | `method_bit_spec` | [Facl/RefinementRequest.lean](Facl/RefinementRequest.lean) | `method_bit`'s bit is `Facl.methodBit`'s |
 | `action_bits_spec` | [Facl/RefinementRequest.lean](Facl/RefinementRequest.lean) | `action_bits`'s bits are `Facl.actionBits`' |
 | `lower_with_spec` | [Facl/RefinementLower.lean](Facl/RefinementLower.lean) | `lower_with`'s policy, or its error, is `Facl.lower`'s |
+| `evaluate_with_spec` | [Facl/RefinementEvaluate.lean](Facl/RefinementEvaluate.lean) | `evaluate_with` denies a path `Facl.canonicalize` rejects with `BadRequestPath`, and otherwise decides as `Facl.decide` does on the canonical path and method bit |
 
 `decide_with_spec` covers matching, method filtering, combining and the deny
 reasons. It holds for any condition evaluator that never fails and agrees with
@@ -69,9 +71,10 @@ proven yet.
 
 `canonicalize_spec` needs no assumptions. With `canonicalize_segment`, it shows
 that the Rust never hands the decision a segment that is empty, a dot segment,
-or contains `/`, NUL or invalid UTF-8. The code that feeds the canonical path
-and method bit into `decide`, `Policy::evaluate` in the `facl` crate, is tested
-but outside the extraction.
+or contains `/`, NUL or invalid UTF-8. `evaluate_with_spec` chains it with
+`method_bit_spec` and `decide_with_spec`, so the decision is proven from the raw
+request path and method onwards, for any condition evaluator. `Policy::evaluate`
+in the `facl` crate is `evaluate_with` with the request facts plugged in.
 
 `lower_with_spec` covers how nested matches flatten into rules: joined patterns
 and capture names, the rest flag and its errors, the depth limit, and each allow
@@ -105,7 +108,8 @@ script. [Aeneas installation instructions](https://github.com/AeneasVerif/aeneas
 CHARON=/path/to/charon AENEAS=/path/to/aeneas verification/extract.sh
 ```
 
-Charon starts at `crate::lower::lower_with`, `crate::decide::action_bits`,
+Charon starts at `crate::decide::evaluate_with`, `crate::lower::lower_with`,
+`crate::decide::action_bits`,
 `crate::path::canonicalize`, `crate::decide::method_bit`,
 `crate::path::match_pattern`, `crate::decide::combine` and
 `crate::decide::decide_with`, and follows their dependencies. The rest of
@@ -158,7 +162,7 @@ lake exe cache get
 lake build --wfail
 ```
 
-The build requires all eighteen theorems named in `comparator.json`, and checks that
+The build requires all nineteen theorems named in `comparator.json`, and checks that
 their transitive axioms are drawn from `propext`, `Classical.choice` and
 `Quot.sound`. The `aeneas` CI job runs `check.sh --paranoid`, described next.
 
@@ -167,7 +171,7 @@ their transitive axioms are drawn from `propext`, `Classical.choice` and
 `lake comparator` judges the proofs without trusting this project's build. In a
 sandbox, it builds and exports two modules:
 
-- the challenge, [Challenge.lean](Challenge.lean), which states the eighteen theorems,
+- the challenge, [Challenge.lean](Challenge.lean), which states the nineteen theorems,
   each proved with `sorry`
 - the solution, the `Facl` module, which proves them
 
@@ -230,7 +234,7 @@ Without Charon and Aeneas, `verification/check.sh --no-extract` skips step 1.
 `lake exe cache get` and `lake build` from `verification/`, then
 `lake comparator` with or without `--paranoid`.
 
-Each run exports only the eighteen theorems and what they depend on, about 8,700
+Each run exports only the nineteen theorems and what they depend on, about 8,700
 declarations, not the whole Mathlib environment. With the build already done,
 `verification/check.sh --paranoid` took about five and a half minutes when
 measured on 2026-11-19.

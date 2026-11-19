@@ -19,7 +19,8 @@
     "FaclCore.path.canonicalize_spec",
     "Facl.lower_allow_methods",
     "FaclCore.decide.action_bits_spec",
-    "FaclCore.lower.lower_with_spec"
+    "FaclCore.lower.lower_with_spec",
+    "FaclCore.decide.evaluate_with_spec"
   ],
   "definition_names": [],
   "permitted_axioms": [
